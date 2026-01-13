@@ -1,21 +1,18 @@
-import 'react-native-gesture-handler';
-import { Stack, Redirect, useRouter, useSegments, Slot } from "expo-router";
-import { GlobalModalProvider } from "./components/GlobalModal";
-import "../global.css";
-import { useEffect, useState } from "react";
-import { enableScreens } from "react-native-screens";
-import { Platform, Text, View, ActivityIndicator, StatusBar } from "react-native";
-import { auth } from '../firebaseConfig';
-import { onAuthStateChanged } from "firebase/auth";
-import * as SplashScreen from 'expo-splash-screen';
-import { useColorScheme } from 'react-native';
-import { AuthProvider, useAuth } from '../context/auth';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import * as Linking from 'expo-linking';
-import linkingConfig from './linking';
-import { ThemeProvider, useTheme } from '../context/theme';
+import { Stack, useRouter, useSegments } from "expo-router";
+import * as SplashScreen from 'expo-splash-screen';
+import { onAuthStateChanged } from "firebase/auth";
+import { useEffect, useState } from "react";
+import { ActivityIndicator, StatusBar, useColorScheme, View } from "react-native";
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { enableScreens } from "react-native-screens";
+import { AuthProvider } from '../context/auth';
 import { LanguageProvider } from '../context/language';
+import { ThemeProvider, useTheme } from '../context/theme';
+import { auth } from '../firebaseConfig';
+import "../global.css";
+import { GlobalModalProvider } from "../utils/GlobalModal";
 
 // Splash ekranının otomatik olarak gizlenmesini engelle
 SplashScreen.preventAutoHideAsync().catch(() => {});

@@ -3,10 +3,9 @@ import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, StatusBar }
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { auth } from "../../firebaseConfig";
+import { auth, db } from "../../firebaseConfig";
 import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
-import { db } from "../../firebaseConfig";
 
 export default function LoginScreen() {
   const router = useRouter();

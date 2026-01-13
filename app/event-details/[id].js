@@ -1,37 +1,37 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { 
-  View, 
-  Text, 
-  TouchableOpacity, 
-  ScrollView, 
-  Image,
-  Linking,
-  Clipboard,
-  ToastAndroid,
-  Alert,
+import { Ionicons } from "@expo/vector-icons";
+import { collection, deleteDoc, doc, getDoc, getDocs, increment, limit, orderBy, query, setDoc, updateDoc, where } from "firebase/firestore";
+import { useEffect, useRef, useState } from 'react';
+import {
   ActivityIndicator,
-  Share,
+  Alert,
+  BackHandler,
+  Clipboard,
   Dimensions,
   FlatList,
-  BackHandler,
+  Image,
+  Linking,
   Modal,
   Platform,
-  StatusBar
+  ScrollView,
+  Share,
+  StatusBar,
+  Text,
+  ToastAndroid,
+  TouchableOpacity,
+  View
 } from 'react-native';
-import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { collection, getDocs, query, increment, where, orderBy, limit, doc, getDoc, updateDoc, arrayUnion, arrayRemove, deleteDoc, setDoc } from "firebase/firestore";
 
 
-import { db, auth } from "../../firebaseConfig";
-import { UpcomingEventCard } from "../components/EventCard";
-import { format } from "date-fns";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
-import { generateEventUrl } from '../components/GenerateUrl';
-import RegisterModal from "../components/RegisterModal";
+import { format } from "date-fns";
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { translations, useLanguage } from '../../context/language';
 import { useTheme as useAppTheme } from '../../context/theme';
-import { useLanguage, translations } from '../../context/language';
+import { auth, db } from "../../firebaseConfig";
+import { generateEventUrl } from '../../utils/GenerateUrl';
+import { UpcomingEventCard } from "../components/EventCard";
+import RegisterModal from "../components/RegisterModal";
 const { width } = Dimensions.get('window');
 
 // Placeholder bileşenleri

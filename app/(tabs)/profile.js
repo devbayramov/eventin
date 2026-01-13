@@ -1,17 +1,16 @@
 // app/home.js
-import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { View, Text, TouchableOpacity, Alert, ActivityIndicator, Image, Modal,  StatusBar, TextInput, Switch, ScrollView, Linking } from "react-native";
-import { useRouter } from "expo-router";
-import { auth, db, storage } from "../../firebaseConfig";
-import { signOut, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from "firebase/auth";
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Ionicons, FontAwesome, MaterialCommunityIcons } from "@expo/vector-icons";
-import { doc, getDoc, updateDoc, collection, setDoc } from "firebase/firestore";
+import { FontAwesome, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import * as ImagePicker from 'expo-image-picker';
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { useTheme, ThemeType } from '../../context/theme';
-import { useThemeStyles } from '../components/theme-styles';
-import { useLanguage, LanguageType, translations } from '../../context/language';
+import { useRouter } from "expo-router";
+import { EmailAuthProvider, reauthenticateWithCredential, signOut, updatePassword } from "firebase/auth";
+import { collection, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import { useEffect, useState } from "react";
+import { ActivityIndicator, Alert, Image, Linking, Modal, ScrollView, StatusBar, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { LanguageType, translations, useLanguage } from '../../context/language';
+import { ThemeType, useTheme } from '../../context/theme';
+import { auth, db, storage } from "../../firebaseConfig";
+import { useThemeStyles } from '../../utils/theme-styles';
 
 // Profil düzenleme modal bileşeni
 const ProfileModalComponent = ({ visible, onClose, userData, onSave, loading }) => {
@@ -929,7 +928,7 @@ export default function Profile() {
       {/* Ayarlar Bölümü */}
       <View className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl px-4 py-1 mb-6 shadow-sm`}>
           {/* Tedbirlerim */}
-          <TouchableOpacity 
+          <TouchableOpacity
             className={`flex-row items-center py-3 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}
             onPress={() => router.push('/user-events')}
           >
@@ -939,7 +938,19 @@ export default function Profile() {
             </Text>
             <Ionicons name="chevron-forward" size={20} color={isDarkMode ? "#9ca3af" : "#9ca3af"} style={{ marginLeft: 'auto' }} />
           </TouchableOpacity>
-          
+
+          {/* Sənədlərim */}
+          <TouchableOpacity
+            className={`flex-row items-center py-3 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}
+            onPress={() => router.push('/documents')}
+          >
+            <Ionicons name="library-outline" size={22} color={isDarkMode ? "#818cf8" : "#6366f1"} />
+            <Text className={`ml-3 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+              {t.profile.myDocuments || t.tabs.documents}
+            </Text>
+            <Ionicons name="chevron-forward" size={20} color={isDarkMode ? "#9ca3af" : "#9ca3af"} style={{ marginLeft: 'auto' }} />
+          </TouchableOpacity>
+
           {/* Biletlerim */}
           {/* <TouchableOpacity className={`flex-row items-center py-3 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
             <Ionicons name="ticket-outline" size={22} color={isDarkMode ? "#818cf8" : "#6366f1"} />

@@ -1,13 +1,10 @@
-import { Tabs } from "expo-router";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
-import "../../global.css"
-import { usePathname } from "expo-router";
-import { useGlobalModal } from '../components/GlobalModal'; 
+import { Tabs, usePathname } from "expo-router";
 import { useEffect, useRef } from 'react';
+import { translations, useLanguage } from '../../context/language';
 import { useTheme } from '../../context/theme';
-import { useLanguage, translations } from '../../context/language';
-import { View } from "react-native";
-import { LinearGradient } from 'expo-linear-gradient';
+import "../../global.css";
+import { useGlobalModal } from '../../utils/GlobalModal';
 
 export default function Layout() {
   const pathname = usePathname();
@@ -24,7 +21,7 @@ export default function Layout() {
     const previousPath = prevPathRef.current;
     
     // Ana sekme adlarını içeren bir dizi oluştur
-    const tabNames = ["home", "follows", "organiser", "documents", "profile"];
+    const tabNames = ["home", "follows", "organiser",  "profile"];
     
     // Mevcut ve önceki path'in sekme adlarını çıkart
     const currentTab = currentPath.split('/').pop();
@@ -83,6 +80,13 @@ export default function Layout() {
       initialRouteName="home"
       screenOptions={getScreenOptions}
     >
+            <Tabs.Screen
+        name="home"
+        options={{
+          tabBarLabel: t.tabs.home,
+          tabBarIcon: ({ color, size }) => <Ionicons name="home" size={size} color={color} />,
+        }}
+      />
       <Tabs.Screen
         name="organiser"
         options={{
@@ -100,20 +104,8 @@ export default function Layout() {
           tabBarIcon: ({ color, size }) => <MaterialIcons name="bookmark" size={size} color={color} />,
         }}
       />
-      <Tabs.Screen
-        name="home"
-        options={{
-          tabBarLabel: t.tabs.home,
-          tabBarIcon: ({ color, size }) => <Ionicons name="home" size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="documents"
-        options={{
-          tabBarLabel: t.tabs.documents,
-          tabBarIcon: ({ color, size }) => <Ionicons name="library" size={size} color={color} />,
-        }}
-      />
+
+    
       <Tabs.Screen
         name="profile"
         options={{

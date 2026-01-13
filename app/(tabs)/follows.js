@@ -1,33 +1,33 @@
 // app/home.js
-import React, { useState, useEffect, useCallback, useRef } from "react";
-import { 
-  View, 
-  Text, 
-  TextInput, 
-  TouchableOpacity, 
-  ScrollView, 
-  Image, 
-  Dimensions, 
-  ActivityIndicator,
-  StatusBar,
-  RefreshControl,
-  Modal,
-  FlatList,
-  Alert,
-  PanResponder,
-  Animated
-} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { collection, getDocs, query, where, orderBy, doc, getDoc, deleteDoc, getCountFromServer } from "firebase/firestore";
-import { db, auth } from "../../firebaseConfig";
-import EventCard, { PlaceholderEventCard } from "../components/EventCard";
-import { useGlobalModal } from "../components/GlobalModal";
-import { useRouter } from "expo-router";
-import { generateEventUrl } from "../components/GenerateUrl";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useTheme } from "../../context/theme";
-import { useLanguage, translations } from "../../context/language";
+import { useRouter } from "expo-router";
+import { collection, deleteDoc, doc, getCountFromServer, getDoc, getDocs, orderBy, query, where } from "firebase/firestore";
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  Animated,
+  Dimensions,
+  FlatList,
+  Image,
+  Modal,
+  PanResponder,
+  RefreshControl,
+  ScrollView,
+  StatusBar,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { translations, useLanguage } from "../../context/language";
+import { useTheme } from "../../context/theme";
+import { auth, db } from "../../firebaseConfig";
+import { generateEventUrl } from "../../utils/GenerateUrl";
+import { useGlobalModal } from "../../utils/GlobalModal";
+import EventCard, { PlaceholderEventCard } from "../components/EventCard";
 const { width } = Dimensions.get("window");
 
 export default function Follows() {

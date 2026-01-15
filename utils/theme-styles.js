@@ -1,4 +1,4 @@
-import { useTheme } from '../../context/theme';
+import { useTheme } from '../context/theme';
 
 // Tema için ortak stil özellikleri
 const lightColors = {

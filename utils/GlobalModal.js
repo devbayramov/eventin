@@ -2,8 +2,8 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated, Dimensions, ScrollView, BackHandler, PanResponder } from 'react-native';
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTheme } from '../../context/theme';
-import { useLanguage, translations } from '../../context/language';
+import { useTheme } from '../context/theme';
+import { useLanguage, translations } from '../context/language';
 
 const { width, height } = Dimensions.get('window');
 

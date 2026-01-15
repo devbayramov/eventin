@@ -1,36 +1,35 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { 
-  View, 
-  Text, 
-  Image, 
-  TouchableOpacity, 
-  ScrollView, 
 
-  StatusBar,
-  Dimensions,
+import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Stack, useLocalSearchParams, usePathname, useRouter } from 'expo-router';
+import { collection, deleteDoc, doc, getDoc, getDocs, query, setDoc, where } from 'firebase/firestore';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import {
   ActivityIndicator,
+  Alert,
+  BackHandler,
+  Dimensions,
+  Image,
   Linking,
   Modal,
-  Share,
-  Alert,
-  FlatList,
-  useWindowDimensions,
   Platform,
-  BackHandler
+  ScrollView,
+  Share,
+  StatusBar,
+  Text,
+  TouchableOpacity,
+  useWindowDimensions,
+  View
 } from 'react-native';
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons } from '@expo/vector-icons';
-import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
-import { collection, getDocs, query, where, doc, getDoc, setDoc, deleteDoc } from 'firebase/firestore';
-import { db, auth } from '../../firebaseConfig';
-import EventCard, { PlaceholderEventCard } from '../components/EventCard';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
-import { generateEventUrl } from '../components/GenerateUrl';
-const { width } = Dimensions.get('window');
-import { usePathname } from 'expo-router';
+import { TabBar, TabView } from 'react-native-tab-view';
+import { translations, useLanguage } from '../../context/language';
 import { useTheme } from '../../context/theme';
-import { useLanguage, translations } from '../../context/language';
+import { auth, db } from '../../firebaseConfig';
+import { generateEventUrl } from '../../utils/GenerateUrl';
+import EventCard, { PlaceholderEventCard } from '../components/EventCard';
+const { width } = Dimensions.get('window');
+
 
 export default function OrganiserDetails() {
   const layout = useWindowDimensions();

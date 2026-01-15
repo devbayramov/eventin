@@ -1,4 +1,5 @@
 // app/home.js
+import * as FileSystem from "expo-file-system";
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -17,7 +18,7 @@ import {
   Linking,
   StatusBar,
 } from "react-native";
-import { useRouter, useLocalSearchParams } from "expo-router";
+import { useRouter } from "expo-router";
 import {
   collection,
   query,
@@ -27,31 +28,31 @@ import {
   doc,
   addDoc,
   where,
+  Dimensions
 } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { db, storage, auth } from "../../firebaseConfig";
+import { db, storage, auth } from "../firebaseConfig";
 import * as DocumentPicker from "expo-document-picker";
-import * as FileSystem from "expo-file-system";
 import * as Sharing from "expo-sharing";
 import * as MediaLibrary from 'expo-media-library';
-import { MaterialIcons, Ionicons, AntDesign, FontAwesome5, MaterialCommunityIcons } from "@expo/vector-icons";
+import { MaterialIcons, Ionicons, AntDesign, MaterialCommunityIcons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Dimensions } from 'react-native';
-import { useTheme } from "../../context/theme";
-import { useLanguage, translations } from "../../context/language";
+import { useTheme } from "../context/theme";
+import { useLanguage, translations } from "../context/language";
 
 export default function Documents() {
   const user = auth.currentUser;
   const router = useRouter();
-   const params = useLocalSearchParams();
-  const screenWidth = Dimensions.get('window').width;
+                                                                                            
+       
+  // const screenWidth = Dimensions.get('window').width;
   
   // Theme ve dil context'lerini kullan
   const { isDarkMode } = useTheme();
   const { language } = useLanguage();
   
-  const [userId, setUserId] = useState(params.userId || (user ? user.uid : null));
+  const [userId, setUserId] = useState(user ? user.uid : null);
   const [successEvents, setSuccessEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [docError, setDocError] = useState(null);
@@ -402,7 +403,8 @@ export default function Documents() {
       const actualFilePath = decodedFilePath.split("?")[0];
       let fileName = actualFilePath.split("/").pop();
       const cleanFileName = fileName.replace(/[^a-zA-Z0-9.-]/g, "_");
-      
+
+      // eslint-disable-next-line import/namespace
       const localFile = FileSystem.documentDirectory + cleanFileName;
       
       // İndirme işlemini başlat
@@ -411,7 +413,7 @@ export default function Documents() {
         localFile,
         {},
         (downloadProgress) => {
-          const progress = downloadProgress.totalBytesWritten / downloadProgress.totalBytesExpectedToWrite;
+         // const progress = downloadProgress.totalBytesWritten / downloadProgress.totalBytesExpectedToWrite;
           // İsteğe bağlı ilerleme gösterimi eklenebilir
         }
       );
@@ -767,7 +769,7 @@ export default function Documents() {
         {item.documentConfirmed && (
           <View className="absolute top-2 left-2 z-50">
             <Image
-              source={require("../../assets/documentConfirmedBadge.png")}
+              source={require("../assets/documentConfirmedBadge.png")}
               className="w-10 h-8"
               resizeMode="contain"
             />
@@ -1030,10 +1032,10 @@ export default function Documents() {
         ) : (
           <View className="flex-1 items-center justify-center mt-[250px] w-full">
             <Image
-              source={require("../../assets/notFindDocument.png")}
+              source={require("../assets/notFindDocument.png")}
               className="h-42"
               resizeMode="contain"
-              style={{ width: screenWidth * 0.9, alignSelf: 'center' }}
+             // style={{ width: screenWidth * 0.9, alignSelf: 'center' }}
             />
             <Text style={{ color: isDarkMode ? '#9ca3af' : '#6b7280', textAlign: 'center', marginTop: 10 }}>
               {translations[language]?.documents?.noDocumentsFound || "Heç bir sənəd tapılmadı"}

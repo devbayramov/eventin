@@ -1,43 +1,75 @@
 // app/home.js
-import React, { useState, useRef, useEffect, useCallback } from "react";
-import { 
-  View, 
-  Text, 
-  TextInput, 
-  TouchableOpacity, 
-  ScrollView, 
-  Image, 
-  Dimensions, 
-  ActivityIndicator,
-  StatusBar,
-  RefreshControl,
-  Platform,
-  Alert
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import Animated, { 
-  useSharedValue, 
+import { useRouter } from "expo-router";
+import { collection, getDocs, limit, orderBy, query, where } from "firebase/firestore";
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  Dimensions,
+  Image,
+  RefreshControl,
+  ScrollView,
+  StatusBar,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
+} from "react-native";
+import Animated, {
+  interpolate,
   useAnimatedScrollHandler,
   useAnimatedStyle,
-  interpolate,
+  useSharedValue,
   withTiming,
-  withSpring,
-  runOnJS
 } from "react-native-reanimated";
-import { collection, getDocs, query, where, orderBy, limit, startAfter, getCountFromServer, startAt, endAt } from "firebase/firestore";
-import { db } from "../../firebaseConfig";
-import EventCard, { UpcomingEventCard, PlaceholderEventCard, PlaceholderUpcomingEventCard } from "../components/EventCard";
-import { useGlobalModal } from "../components/GlobalModal";
-import { useRouter } from "expo-router";
-import { generateEventUrl } from "../components/GenerateUrl";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { translations, useLanguage } from '../../context/language';
 import { useTheme } from '../../context/theme';
-import { useLanguage, translations } from '../../context/language';
+import { db } from "../../firebaseConfig";
+import { generateEventUrl } from "../../utils/GenerateUrl";
+import { useGlobalModal } from "../../utils/GlobalModal";
+import EventCard, { PlaceholderEventCard, PlaceholderUpcomingEventCard, UpcomingEventCard } from "../components/EventCard";
 const { width } = Dimensions.get("window");
 const CARD_WIDTH = width * 0.7; 
-const SPACING = width * 0.05; 
+const SPACING = width * 0.05;
 
+// AnimatedDot component - hooks kurallarına uygun şekilde tanımlandı
+const AnimatedDot = ({ index, scrollX }) => {
+  const animatedStyle = useAnimatedStyle(() => {
+    const inputRange = [
+      (index - 1) * (CARD_WIDTH + SPACING),
+      index * (CARD_WIDTH + SPACING),
+      (index + 1) * (CARD_WIDTH + SPACING),
+    ];
 
+    const dotWidth = interpolate(
+      scrollX.value,
+      inputRange,
+      [8, 16, 8],
+      "clamp"
+    );
+
+    const opacity = interpolate(
+      scrollX.value,
+      inputRange,
+      [0.5, 1, 0.5],
+      "clamp"
+    );
+
+    return {
+      width: withTiming(dotWidth, { duration: 300 }),
+      opacity: withTiming(opacity, { duration: 300 }),
+    };
+  });
+
+  return (
+    <Animated.View
+      className="h-2 rounded-full bg-indigo-600 mx-1"
+      style={animatedStyle}
+    />
+  );
+};
 
 // Filtreleme fonksiyonu
 const isValidEvent = (event) => {
@@ -159,37 +191,6 @@ export default function Home() {
   const timerRef = useRef(null);
   const scrollViewRef = useRef(null);
   
-  // Dot stili referanslarını sabit olarak tanımlıyoruz
-  const dotStyles = [];
-  for (let i = 0; i < 10; i++) {
-    dotStyles.push(useAnimatedStyle(() => {
-      const inputRange = [
-        (i - 1) * (CARD_WIDTH + SPACING),
-        i * (CARD_WIDTH + SPACING),
-        (i + 1) * (CARD_WIDTH + SPACING),
-      ];
-      
-      const width = interpolate(
-        scrollX.value,
-        inputRange,
-        [8, 16, 8],
-        "clamp"
-      );
-      
-      const opacity = interpolate(
-        scrollX.value,
-        inputRange,
-        [0.5, 1, 0.5],
-        "clamp"
-      );
-      
-      return {
-        width: withTiming(width, { duration: 300 }),
-        opacity: withTiming(opacity, { duration: 300 }),
-      };
-    }));
-  }
-
   useEffect(() => {
     if (selectedSort) {
       setSortOrder(selectedSort);
@@ -765,11 +766,7 @@ export default function Home() {
         {upcomingEvents.length > 1 && (
           <View className="flex-row justify-center mt-3">
             {upcomingEvents.map((_, index) => (
-              <Animated.View
-                key={index.toString()}
-                className="h-2 rounded-full bg-indigo-600 mx-1"
-                style={[dotStyles[index] || { width: 8, opacity: 0.5 }]}
-              />
+              <AnimatedDot key={index.toString()} index={index} scrollX={scrollX} />
             ))}
           </View>
         )}
@@ -949,8 +946,8 @@ export default function Home() {
           />
         }
       >
-        {/* Upcoming Events Slider - sadece filtreleme yoksa göster */}
-        {!hasActiveUserFilter && (
+        {/* Upcoming Events Slider - sadece filtreleme yoksa ve event varsa göster */}
+        {!hasActiveUserFilter && (upcomingEventsLoading || upcomingEvents.length > 0) && (
           <View>
             <View className="px-4 mb-2 py-2">
               <Text className={`text-lg font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'} text-center`}>

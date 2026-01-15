@@ -17,15 +17,15 @@ import linkingConfig from './linking';
 import { ThemeProvider, useTheme } from '../context/theme';
 import { LanguageProvider } from '../context/language';
 
-// Splash ekranının otomatik olarak gizlenmesini engelle
+// Splash ekranının avtomatik gizlənməsini dayandır
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
 const queryClient = new QueryClient();
 
-// Deep linking yapılandırması
+// Deep linking üçün baza URL
 const prefix = Linking.createURL('/');
 
-// Tema renklerini tanımlama
+// Tema rəngləri
 const themeColors = {
   light: {
     background: '#fff',
@@ -41,7 +41,7 @@ const themeColors = {
   }
 };
 
-// StatusBar bileşeni
+// StatusBar
 function ThemeStatusBar() {
   const { isDarkMode } = useTheme();
   
@@ -54,7 +54,7 @@ function ThemeStatusBar() {
   );
 }
 
-// Tema stiller bileşeni
+// Tema stiller 
 function ThemedStack() {
   const { currentTheme, isDarkMode } = useTheme();
   
@@ -80,11 +80,11 @@ export default function RootLayout() {
   useEffect(() => {
     enableScreens();
     
-    // Firebase auth durumunu dinle
+    // Firebase auth dinləyicisi
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       
-      // Auth durumu belirlendikten hemen sonra splash ekranını gizle
+      // Auth yükləndikdən sonra splash ekranını gizlət
       const hideSplash = async () => {
         setAppIsReady(true);
         await SplashScreen.hideAsync();
@@ -131,11 +131,11 @@ function RootLayoutNav({ user }) {
     const inTabsGroup = segments[0] === '(tabs)';
     const inIndexPage = segments.length === 0 || segments[0] === 'index';
 
-    // Kullanıcı yoksa ve auth grubunda değilse, index sayfasına yönlendir
+    // istifadəçi yoxdursa və auth qrupunda və ya index səhifəsindədirsə, əsas səhifəyə yönlendir
     if (!user && !inAuthGroup && !inIndexPage) {
       router.replace('/');
     } 
-    // Kullanıcı varsa ve index sayfasında veya auth grubundaysa, home sayfasına yönlendir
+
     else if (user && (inIndexPage || inAuthGroup)) {
       router.replace('/(tabs)/home');
     }

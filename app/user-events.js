@@ -26,7 +26,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '../context/theme';
 import { useLanguage, translations } from '../context/language';
 
-// Tab bileşeni
+// Tab component
 const Tab = ({ title, active, onPress, count }) => {
   const { isDarkMode } = useTheme();
   return (
@@ -60,7 +60,7 @@ export default function UserEvents() {
   const t = translations[language];
   const screenWidth = Dimensions.get('window').width;
 
-  // State tanımlamaları
+  // State definitions
   const [loading, setLoading] = useState(true);
   const [successfulLoading, setSuccessfulLoading] = useState(true);
   const [events, setEvents] = useState([]);
@@ -71,32 +71,32 @@ export default function UserEvents() {
   const [currentUser, setCurrentUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   
-  // User verileri için
+  // For user data
   const [userData, setUserData] = useState(null);
   
-  // Feedback modal ve stateleri
+  // Feedback modal and states
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [feedback, setFeedback] = useState("");
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [feedbackLoading, setFeedbackLoading] = useState(false);
   
-  // İptal modalı
+  // Cancel modal
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelLoading, setCancelLoading] = useState(false);
   
-  // Bilet modalı
+  // Ticket modal
   const [showTicketModal, setShowTicketModal] = useState(false);
   const [ticketLoading, setTicketLoading] = useState(false);
   
-  // Feedback verilmiş etkinlikleri takip etmek için
+  // To track events with given feedback
   const [feedbackGivenEvents, setFeedbackGivenEvents] = useState({});
   
-  // Document modal stateleri
+  // Document modal states
   const [showDocumentModal, setShowDocumentModal] = useState(false);
   const [showDocumentInfoModal, setShowDocumentInfoModal] = useState(false);
   const [documentUrl, setDocumentUrl] = useState(null);
   
-  // Firebase'den kullanıcı verilerini al
+  // Get user data from Firebase
   useEffect(() => {
     const getUserData = async () => {
       try {
@@ -107,11 +107,11 @@ export default function UserEvents() {
             setUserData(userSnap.data());
           }
         } else {
-          // Auth'da kullanıcı yoksa AsyncStorage'dan kontrol et
+          // If no user in Auth, check from AsyncStorage
           const storedUser = await AsyncStorage.getItem('user');
           if (storedUser) {
             const parsedUser = JSON.parse(storedUser);
-            // Firebase'den kullanıcıyı getir
+            // Get user from Firebase
             if (parsedUser.uid) {
               const userDocRef = doc(db, "users", parsedUser.uid);
               const userSnap = await getDoc(userDocRef);
@@ -122,31 +122,31 @@ export default function UserEvents() {
           }
         }
       } catch (error) {
-        console.error("Kullanıcı verileri alınamadı:", error);
+        console.error("Failed to get user data:", error);
       }
     };
     
     getUserData();
   }, [currentUser]);
 
-  // Kullanıcı oturumunu kontrol et
+  // Check user session
   useEffect(() => {
     const checkUser = async () => {
       try {
-        // Önce auth'dan kontrol et
+        // First check from auth
         if (auth.currentUser) {
           setCurrentUser(auth.currentUser);
           setAuthLoading(false);
           return;
         }
         
-        // Auth'da yoksa AsyncStorage'dan kontrol et
+        // If not in Auth, check from AsyncStorage
         const storedUser = await AsyncStorage.getItem('user');
         if (storedUser) {
           setCurrentUser(JSON.parse(storedUser));
         }
       } catch (error) {
-        console.error("Kullanıcı bilgileri alınamadı:", error);
+        console.error("Failed to get user info:", error);
       } finally {
         setAuthLoading(false);
       }
@@ -155,7 +155,7 @@ export default function UserEvents() {
     checkUser();
   }, []);
 
-  // Kayıtlı etkinlikleri getir
+  // Get registered events
   useEffect(() => {
     if (!authLoading) {
       if (!currentUser) {
@@ -181,13 +181,13 @@ export default function UserEvents() {
             }
           }
           
-          // Etkinlikleri filtrele: Sadece bitiş tarihi bugün veya daha sonra olanları göster
+          // Filter events: Only show events with end date today or later
           const now = new Date();
           const filteredList = eventsList.filter(event => {
-            // Bitiş tarihi yoksa veya geçersizse göster
+            // Show if end date is missing or invalid
             if (!event.eventenddate) return true;
             
-            // Bitiş tarihi bugünden önceyse gösterme
+            // Don't show if end date is before today
             if (new Date(event.eventenddate) < now) {
               return false;
             }
@@ -197,7 +197,7 @@ export default function UserEvents() {
           
           setEvents(filteredList);
           if (activeTab === "registered") {
-            setFilteredEvents(filteredList); // İlk yükleme için filtrelenmiş liste
+            setFilteredEvents(filteredList); // Filtered list for initial load
           }
         } catch (error) {
           console.error("Qeydiyyatdan keçmiş tədbirləri yükləyərkən xəta:", error);
@@ -206,7 +206,7 @@ export default function UserEvents() {
         }
       };
       
-      // Başarılı etkinlikleri getir
+      // Get successful events
       const fetchSuccessfulEvents = async () => {
         try {
           setSuccessfulLoading(true);
@@ -229,13 +229,13 @@ export default function UserEvents() {
               const eventData = { id: eventDocSnap.id, ...eventDocSnap.data() };
               eventsList.push(eventData);
               
-              // Her etkinlik için feedback durumunu kontrol et
+              // Check feedback status for each event
               checkUserFeedbackStatus(eventDocSnap.id);
             }
           }
           setSuccessfulEvents(eventsList);
           if (activeTab === "successful") {
-            setFilteredEvents(eventsList); // Tab değişince filtrelenmemiş liste göster
+            setFilteredEvents(eventsList); // Show unfiltered list when tab changes
           }
         } catch (error) {
           console.error("Uğurlu tədbirləri yükləyərkən xəta:", error);
@@ -244,22 +244,22 @@ export default function UserEvents() {
         }
       };
       
-      // Her iki etkinlik listesini de yükle
+      // Load both event lists
       fetchRegisteredEvents();
       fetchSuccessfulEvents();
     }
   }, [currentUser, authLoading, router]);
 
-  // Arama fonksiyonu
+  // Search function
   useEffect(() => {
-    // Aktif sekmeye göre doğru etkinlik listesini göster
+    // Show correct event list based on active tab
     if (activeTab === "registered") {
       setFilteredEvents(events);
     } else if (activeTab === "successful") {
       setFilteredEvents(successfulEvents);
     }
     
-    // Aramayı uygula
+    // Apply search
     if (search.trim()) {
       const currentList = activeTab === "registered" ? events : successfulEvents;
       const filtered = currentList.filter(event => 
@@ -272,47 +272,47 @@ export default function UserEvents() {
     }
   }, [activeTab, search, events, successfulEvents]);
 
-  // Etkinliğe tıklanınca detay sayfasına git
+  // Go to detail page when event is clicked
   const handleEventPress = (event) => {
     router.push(`/event-details/${event.id}`);
   };
 
-  // Geri butonuna basınca gerçekleşecek işlem
+  // Action when back button is pressed
   const handleBackPress = () => {
     router.back();
   };
 
-  // Tab'ı değiştir
+  // Change tab
   const changeTab = (tab) => {
     setActiveTab(tab);
   };
 
-  // İptal et butonuna basınca
+  // When cancel button is pressed
   const handleCancelEvent = (event) => {
     setSelectedEvent(event);
     setShowCancelModal(true);
   };
 
-  // Bilete bax butonuna basınca
+  // When view ticket button is pressed
   const handleViewTicket = (event) => {
     setSelectedEvent(event);
     setShowTicketModal(true);
   };
 
-  // PDF olarak indir
+  // Download as PDF
   const handleDownloadTicket = () => {
-    // Gerçek bir PDF indirme işlevi burada olacak
+    // Real PDF download function will be here
     Alert.alert("Bildiriş", "Bilet PDF olaraq endirilib");
   };
 
-  // Kayıt iptal işlemi 
+  // Registration cancellation process
   const handleCancelRegistration = async () => {
     if (!selectedEvent || !currentUser) return;
     try {
       setCancelLoading(true);
       const deletePromises = [];
 
-      // Etkinliğin kayıtlı kullanıcılarından sil
+      // Delete from event's registered users
       const eventRegRef = collection(
         db,
         "events",
@@ -330,7 +330,7 @@ export default function UserEvents() {
         }
       });
 
-      // Kullanıcının kayıtlı etkinliklerinden sil
+      // Delete from user's registered events
       const userRegRef = collection(
         db,
         "users",
@@ -350,7 +350,7 @@ export default function UserEvents() {
 
       await Promise.all(deletePromises);
       
-      // State'i güncelle
+      // Update state
       setEvents(prev => prev.filter(event => event.id !== selectedEvent.id));
       setFilteredEvents(prev => prev.filter(event => event.id !== selectedEvent.id));
       
@@ -364,49 +364,49 @@ export default function UserEvents() {
     }
   };
 
-  // Senedsiz butonu için
+  // For documentless button
   const handleDocumentless = (event) => {
-    // Önce etkinliğin belge durumunu kontrol et
+    // First check event's document status
     if (event.eventDocument && event.eventDocument !== 'Sənədsiz') {
-      // Etkinliğin belgesi var
+      // Event has document
       setSelectedEvent(event);
       setDocumentUrl(event.documentUrl || null);
       setShowDocumentModal(true);
     } else {
-      // Etkinliğin belgesi yok
+      // Event has no document
       setShowDocumentInfoModal(true);
     }
   };
 
-  // Bax butonuna tıklanınca
+  // When view button is clicked
   const handleViewDocument = async () => {
     setShowDocumentModal(false);
     router.push('/documents');
   };
 
-  // Feedback durumunu kontrol et
+  // Check feedback status
   const checkUserFeedbackStatus = async (eventId) => {
     if (!eventId || !currentUser) return false;
     
     try {
-      // Zaten local'de kontrol edilmiş mi?
+      // Already checked locally?
       if (feedbackGivenEvents[eventId] !== undefined) {
         return feedbackGivenEvents[eventId];
       }
       
-      // Kullanıcının başarılı etkinliklerinde feedback kontrolü
+      // Check feedback in user's successful events
       const userSuccessEventRef = collection(db, "users", currentUser.uid, "userSuccessEvents");
       const userSuccessSnapshot = await getDocs(userSuccessEventRef);
       
       for (const doc of userSuccessSnapshot.docs) {
         if (doc.data().eventId === eventId && doc.data().feedback) {
-          // Local state'i güncelle
+          // Update local state
           setFeedbackGivenEvents(prev => ({...prev, [eventId]: true}));
           return true;
         }
       }
       
-      // Etkinlik içindeki feedback'lerde kontrol et
+      // Check in feedbacks within event
       const eventRef = doc(db, "events", eventId);
       const eventSnap = await getDoc(eventRef);
       
@@ -420,17 +420,17 @@ export default function UserEvents() {
         return hasFeedback;
       }
       
-      // Local state'i güncelle - feedback yok
+      // Update local state - no feedback
       setFeedbackGivenEvents(prev => ({...prev, [eventId]: false}));
       return false;
     } catch (error) {
-      console.error("Feedback durumu kontrol edilirken hata:", error);
+      console.error("Error checking feedback status:", error);
       setFeedbackGivenEvents(prev => ({...prev, [eventId]: false}));
       return false;
     }
   };
 
-  // Feedback gönderme işlemi
+  // Feedback submission process
   const handleConfirmFeedback = async () => {
     if (!selectedEvent) return;
     if (!feedback) {
@@ -453,7 +453,7 @@ export default function UserEvents() {
         EventFeedbacks: arrayUnion(feedbackData),
       });
       
-      // Kullanıcının başarılı etkinliklerini güncelle
+      // Update user's successful events
       const userSuccessEventRefs = collection(db, "users", currentUser.uid, "userSuccessEvents");
       const userSuccessSnapshot = await getDocs(userSuccessEventRefs);
       
@@ -465,7 +465,7 @@ export default function UserEvents() {
         }
       });
       
-      // State'i güncelle
+      // Update state
       setFeedbackGivenEvents(prev => ({...prev, [selectedEvent.id]: true}));
       setShowFeedbackModal(false);
       setFeedback("");
@@ -478,7 +478,7 @@ export default function UserEvents() {
     }
   };
 
-  // Rey bildir butonu için - değiştirilmiş
+  // For feedback button - modified
   const handleFeedback = async (event) => {
     setSelectedEvent(event);
     const hasFeedback = await checkUserFeedbackStatus(event.id);
@@ -490,7 +490,7 @@ export default function UserEvents() {
     }
   };
 
-  // Kartı render et
+  // Render card
   const renderEventCard = (item) => {
     const hasFeedback = feedbackGivenEvents[item.id] === true;
     const feedbackChecking = feedbackGivenEvents[item.id] === undefined;
@@ -505,7 +505,7 @@ export default function UserEvents() {
           isDarkMode={isDarkMode} 
         />
         
-        {/* Butonlar */}
+        {/* Buttons */}
         {activeTab === "registered" ? (
           <View style={{
             marginHorizontal: 4,
@@ -647,14 +647,14 @@ export default function UserEvents() {
           fontSize: 18,
           fontWeight: 'bold',
           textAlign: 'center',
-          marginRight: 28, // Geri butonunu dengelemek için
+          marginRight: 28, // To balance back button
           color: isDarkMode ? '#fff' : '#000',
         }}>
           {t.profile.myEvents}
         </Text>
       </View>
       
-      {/* Arama Kutusu */}
+      {/* Search Box */}
       <View style={{
         padding: 16,
         backgroundColor: isDarkMode ? '#111827' : '#f9fafb',
@@ -687,7 +687,7 @@ export default function UserEvents() {
         </View>
       </View>
       
-      {/* Tablar */}
+      {/* Tabs */}
       <View style={{
         flexDirection: 'row',
         backgroundColor: isDarkMode ? '#111827' : '#f9fafb',
@@ -708,9 +708,9 @@ export default function UserEvents() {
         />
       </View>
       
-      {/* İçerik */}
+      {/* Content */}
       <View style={{flex: 1}}>
-        {/* Qeydiyyatlı Tədbirlər */}
+        {/* Registered Events */}
         {activeTab === "registered" && (
           loading ? (
             <ScrollView contentContainerStyle={{paddingVertical: 8}}>
@@ -758,7 +758,7 @@ export default function UserEvents() {
           )
         )}
         
-        {/* Uğurlu Tədbirlər */}
+        {/* Successful Events */}
         {activeTab === "successful" && (
           successfulLoading ? (
             <ScrollView contentContainerStyle={{paddingVertical: 8}}>
@@ -1052,7 +1052,7 @@ export default function UserEvents() {
         </View>
       </Modal>
 
-      {/* İptal Modal */}
+      {/* Cancel Modal */}
       <Modal
         animationType="fade"
         transparent={true}
@@ -1151,7 +1151,7 @@ export default function UserEvents() {
         </View>
       </Modal>
 
-      {/* Bilet Modal */}
+      {/* Ticket Modal */}
       <Modal
         animationType="fade"
         transparent={true}

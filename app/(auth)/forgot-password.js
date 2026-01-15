@@ -22,23 +22,19 @@ export default function ForgotPasswordScreen() {
       setLoading(true);
       setErrorMessage("");
 
-      // Email formatını kontrol et ve düzenle
-      let userEmail = email.trim(); // Boşlukları temizle
+      let userEmail = email.trim(); 
       if (!userEmail.includes('@')) {
         userEmail = userEmail + '@gmail.com';
       }
 
-      // Email formatı kontrolü
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(userEmail)) {
         setErrorMessage("Düzgün email formatı daxil edin");
         return;
       }
 
-      // Firebase'den şifre sıfırlama linki gönder
       await sendPasswordResetEmail(auth, userEmail);
       
-      // Başarılı mesajı göster ve login sayfasına yönlendir
       Alert.alert(
         "Uğurlu",
         "Şifrə yeniləmə linki email adresinizə göndərildi. Zəhmət olmasa emailinizi yoxlayın.",
@@ -89,12 +85,10 @@ export default function ForgotPasswordScreen() {
         translucent={true} 
       />
       <View className="mx-4 bg-white rounded-2xl p-6 shadow-2xl shadow-black/40">
-        {/* Başlıq */}
         <Text className="text-3xl font-bold text-gray-900 text-center mb-6">
           Şifrəni dəyişdir
         </Text>
 
-        {/* Email Sahəsi */}
         <View className="space-y-4">
           <View>
             <Text className="text-sm font-medium text-gray-700 mb-1">Email</Text>
@@ -112,7 +106,6 @@ export default function ForgotPasswordScreen() {
             </View>
           </View>
 
-          {/* Şifrə Sıfırlama Düyməsi */}
           <TouchableOpacity 
             onPress={handleResetPassword}
             className="bg-indigo-600 rounded-lg py-3 mt-4"
@@ -124,7 +117,6 @@ export default function ForgotPasswordScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Hata Mesajı */}
         {errorMessage ? (
           <Text className="text-red-500 text-sm text-center mt-4">{errorMessage}</Text>
         ) : null}

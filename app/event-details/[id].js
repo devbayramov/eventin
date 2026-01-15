@@ -21,8 +21,6 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { collection, getDocs, query, increment, where, orderBy, limit, doc, getDoc, updateDoc, arrayUnion, arrayRemove, deleteDoc, setDoc } from "firebase/firestore";
-
-
 import { db, auth } from "../../firebaseConfig";
 import { UpcomingEventCard } from "../components/EventCard";
 import { format } from "date-fns";
@@ -34,7 +32,8 @@ import { useTheme as useAppTheme } from '../../context/theme';
 import { useLanguage, translations } from '../../context/language';
 const { width } = Dimensions.get('window');
 
-// Placeholder bileşenleri
+
+
 const EventDetailsPlaceholder = () => {
   const { isDarkMode } = useAppTheme();
   

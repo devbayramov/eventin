@@ -1,4 +1,3 @@
-// Deep linking yapılandırması
 export default {
   prefixes: [
     'eventin://',

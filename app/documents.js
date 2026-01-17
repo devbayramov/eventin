@@ -17,6 +17,7 @@ import {
   Pressable,
   Linking,
   StatusBar,
+  Dimensions,
 } from "react-native";
 import { useRouter } from "expo-router";
 import {
@@ -27,8 +28,7 @@ import {
   deleteDoc,
   doc,
   addDoc,
-  where,
-  Dimensions
+  where
 } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { db, storage, auth } from "../firebaseConfig";
@@ -46,7 +46,7 @@ export default function Documents() {
   const router = useRouter();
                                                                                             
        
-  // const screenWidth = Dimensions.get('window').width;
+  const screenWidth = Dimensions.get('window').width;
   
   // Theme ve dil context'lerini kullan
   const { isDarkMode } = useTheme();
@@ -1033,9 +1033,12 @@ export default function Documents() {
           <View className="flex-1 items-center justify-center mt-[250px] w-full">
             <Image
               source={require("../assets/notFindDocument.png")}
-              className="h-42"
-              resizeMode="contain"
-             // style={{ width: screenWidth * 0.9, alignSelf: 'center' }}
+              style={{
+                      width: screenWidth * 0.9,
+                      height: undefined,
+                      aspectRatio: 1,
+                      resizeMode: 'contain'
+                    }}
             />
             <Text style={{ color: isDarkMode ? '#9ca3af' : '#6b7280', textAlign: 'center', marginTop: 10 }}>
               {translations[language]?.documents?.noDocumentsFound || "Heç bir sənəd tapılmadı"}

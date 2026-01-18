@@ -45,8 +45,6 @@ export default function Follows() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [visibleEvents, setVisibleEvents] = useState([]);
   const [page, setPage] = useState(1);
-  const [categories, setCategories] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState("Bütün sahələr");
   const [noMoreEvents, setNoMoreEvents] = useState(false);
   const eventsPerPage = 15;
   const [isClosing, setIsClosing] = useState(false);
@@ -56,13 +54,14 @@ export default function Follows() {
   
   // GlobalModal hook'u
   const globalModal = useGlobalModal();
-  const { 
-    selectedRegion, 
-    selectedSort, 
+  const {
+    selectedRegion,
+    selectedSort,
     selectedEventType,
     selectedPayment,
     selectedDocument,
-    hasActiveFilters 
+    selectedCategory,
+    hasActiveFilters
   } = globalModal;
   
   // Theme ve Language context'lerini kullan
@@ -106,36 +105,6 @@ export default function Follows() {
       },
     })
   ).current;
-  
-  const fetchCategories = useCallback(async () => {
-    try {
-      const querySnapshot = await getDocs(collection(db, "categories"));
-      let categoriesList = querySnapshot.docs.map((doc) => doc.data().name);
-      
-      // Kategori listesini özel sıralamaya göre düzenle
-      // 1. "Texnologiya" kategorisini başa taşı
-      const texnologiyaIndex = categoriesList.findIndex(cat => cat === "Texnologiya");
-      if (texnologiyaIndex !== -1) {
-        // "Texnologiya" kategorisini listeden çıkar
-        const texnologiya = categoriesList.splice(texnologiyaIndex, 1)[0];
-        // Listenin başına ekle
-        categoriesList.unshift(texnologiya);
-      }
-      
-      // 2. "Digər" kategorisini sona taşı
-      const digerIndex = categoriesList.findIndex(cat => cat === "Digər");
-      if (digerIndex !== -1) {
-        // "Digər" kategorisini listeden çıkar
-        const diger = categoriesList.splice(digerIndex, 1)[0];
-        // Listenin sonuna ekle
-        categoriesList.push(diger);
-      }
-      
-      setCategories(categoriesList);
-    } catch (error) {
-      console.error("❌ Kategoriler yüklenirken hata:", error.message);
-    }
-  }, []);
   
   // Kullanıcı bilgisini alma
   const getCurrentUser = useCallback(async () => {
@@ -323,10 +292,10 @@ export default function Follows() {
     }
 
     let filtered = [...eventsList];
-    
+
     // Arama filtreleme
     if (search) {
-      filtered = filtered.filter(event => 
+      filtered = filtered.filter(event =>
         event.eventname?.toLowerCase().includes(search.toLowerCase()) ||
         event.eventtext?.toLowerCase().includes(search.toLowerCase()) ||
         event.eventRegion?.toLowerCase().includes(search.toLowerCase())
@@ -334,34 +303,47 @@ export default function Follows() {
     }
 
     // Filtreleme yokken rastgele sırala
-    const noFiltersActive = 
-      selectedRegion === "Bütün bölgələr" && 
-      selectedEventType === "Bütün növlər" && 
-      selectedPayment === "Hamısı" && 
+    const noFiltersActive =
+      selectedRegion === "Bütün bölgələr" &&
+      selectedEventType === "Bütün növlər" &&
+      selectedPayment === "Hamısı" &&
       selectedDocument === "Hamısı" &&
-      selectedCategory === "Bütün sahələr" &&
-      !selectedSort && 
+      selectedCategory === "Hamısı" &&
+      !selectedSort &&
       search === "";
-    
+
     if (noFiltersActive) {
       // Basit rastgele sıralama
       filtered = [...eventsList].sort(() => 0.5 - Math.random());
     } else {
-      // Kategori, bölge, etkinlik türü, ödeme ve belge filtreleri
+      // Bölge, etkinlik türü, ödeme, belge ve kateqoriya filtreleri
+      // Əsas kateqoriyaların alt kateqoriyaları
+      const eylenceSubcategories = ["Konsert", "Teatr", "Festival", "Film", "Oyun gecəsi", "Stand-up", "Musiqi", "Rəqs"];
+      const karyeraSubcategories = ["Seminar", "Konfrans", "Workshop", "Networking", "Təlim", "Mentorluq", "İş yarmarkası", "Startap"];
+
       filtered = filtered.filter(event => {
-        // Kategori eşleşmesini kontrol et (eventcategory veya category alanlarını kontrol et)
-        const matchCategory = selectedCategory === "Bütün sahələr" || 
-                              event.eventcategory === selectedCategory || 
-                              event.category === selectedCategory;
-                              
         const matchRegion = selectedRegion === "Bütün bölgələr" || event.eventRegion === selectedRegion;
         const matchEventType = selectedEventType === "Bütün növlər" || event.eventType === selectedEventType;
         const matchPayment = selectedPayment === "Hamısı" || event.payment === selectedPayment;
         const matchDocument = selectedDocument === "Hamısı" || event.eventDocument === selectedDocument;
-        
-        return matchCategory && matchRegion && matchEventType && matchPayment && matchDocument;
+
+        // Kateqoriya filtresini uygula
+        let matchCategory = false;
+        const eventCategory = event.eventcategory || event.category;
+
+        if (selectedCategory === "Hamısı") {
+          matchCategory = true;
+        } else if (selectedCategory === "Əyləncə") {
+          matchCategory = eventCategory === "Əyləncə" || eylenceSubcategories.includes(eventCategory);
+        } else if (selectedCategory === "Karyera") {
+          matchCategory = eventCategory === "Karyera" || karyeraSubcategories.includes(eventCategory);
+        } else {
+          matchCategory = eventCategory === selectedCategory;
+        }
+
+        return matchRegion && matchEventType && matchPayment && matchDocument && matchCategory;
       });
-      
+
       // Sıralama
       if (selectedSort) {
         filtered.sort((a, b) => {
@@ -378,12 +360,12 @@ export default function Follows() {
         });
       }
     }
-    
+
     setFilteredEvents(filtered);
     setVisibleEvents(filtered.slice(0, eventsPerPage));
     setPage(1);
     setNoMoreEvents(filtered.length <= eventsPerPage);
-  }, [search, selectedRegion, selectedEventType, selectedPayment, selectedDocument, selectedSort, selectedCategory]);
+  }, [search, selectedRegion, selectedEventType, selectedPayment, selectedDocument, selectedCategory, selectedSort]);
   
   // Daha fazla etkinlik yükleme
   const loadMoreEvents = useCallback(async () => {
@@ -474,8 +456,7 @@ export default function Follows() {
     try {
       await Promise.all([
         fetchFollowedOrganisers(),
-        fetchFollowedOrganiserEvents(),
-        fetchCategories()
+        fetchFollowedOrganiserEvents()
       ]);
     } catch (error) {
       console.error("Yeniləmə xətası:", error);
@@ -503,18 +484,17 @@ export default function Follows() {
       await Promise.all([
         getCurrentUser(),
         fetchFollowedOrganisers(),
-        fetchFollowedOrganiserEvents(),
-        fetchCategories()
+        fetchFollowedOrganiserEvents()
       ]);
     };
-    
+
     initialize();
   }, []);
   
   // Filtreleri uygulama
   useEffect(() => {
     applyFilters(events);
-  }, [events, search, selectedRegion, selectedEventType, selectedPayment, selectedDocument, selectedSort, selectedCategory]);
+  }, [events, search, selectedRegion, selectedEventType, selectedPayment, selectedDocument, selectedCategory, selectedSort]);
   
   // Modal'ı açma fonksiyonu
   const openModal = () => {
@@ -578,64 +558,11 @@ export default function Follows() {
             <Ionicons 
               name="funnel-outline" 
               size={20} 
-              color={hasActiveFilters ? "#FFFFFF" : (isDarkMode ? '#e5e7eb' : '#4F46E5')} 
+              color={hasActiveFilters ? "#FFFFFF" : (isDarkMode ? '#818CF8' : '#4F46E5')}
             />
           </TouchableOpacity>
         </View>
 
-        {/* Kategoriler */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="px-4 pb-2">
-          <View className="mr-2">
-            <TouchableOpacity 
-              className={`px-4 py-2 rounded-full border`}
-              style={{
-                backgroundColor: selectedCategory === "Bütün sahələr" 
-                  ? '#4F46E5' 
-                  : (isDarkMode ? '#1f2937' : 'white'),
-                borderColor: selectedCategory === "Bütün sahələr"
-                  ? '#4F46E5'
-                  : (isDarkMode ? '#374151' : '#e5e7eb')
-              }}
-              onPress={() => setSelectedCategory("Bütün sahələr")}
-            >
-              <Text style={{ 
-                color: selectedCategory === "Bütün sahələr" 
-                  ? '#ffffff' 
-                  : (isDarkMode ? '#e5e7eb' : '#374151') 
-              }}>
-                {translations[language]?.categories?.allCategories || "Bütün sahələr"}
-              </Text>
-            </TouchableOpacity>
-          </View>
-          
-          {categories.map((category, index) => (
-            <View   
-            key={category} 
-            className={`${index === categories.length - 1 ? 'mr-4' : 'mr-2'}`}
-          >
-              <TouchableOpacity 
-                className={`px-4 py-2 rounded-full border`}
-                style={{
-                  backgroundColor: selectedCategory === category 
-                    ? '#4F46E5' 
-                    : (isDarkMode ? '#1f2937' : 'white'),
-                  borderColor: selectedCategory === category
-                    ? '#4F46E5'
-                    : (isDarkMode ? '#374151' : '#e5e7eb')
-                }}
-                onPress={() => setSelectedCategory(category)}
-              >
-                <Text style={{ 
-                  color: selectedCategory === category 
-                    ? '#ffffff' 
-                    : (isDarkMode ? '#e5e7eb' : '#374151') 
-                }}>
-                  {category}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          ))}
-        </ScrollView>
       </View>
       
       {/* Başlık - Ortada */}

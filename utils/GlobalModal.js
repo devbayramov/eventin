@@ -24,6 +24,8 @@ const ModalContext = createContext({
   setSelectedPayment: () => {},
   selectedDocument: "Hamısı",
   setSelectedDocument: () => {},
+  selectedCategory: "Hamısı",
+  setSelectedCategory: () => {},
   hasActiveFilters: false
 });
 
@@ -38,18 +40,45 @@ export const GlobalModalProvider = ({ children }) => {
   const [showEventTypes, setShowEventTypes] = useState(false);
   const [showPayments, setShowPayments] = useState(false);
   const [showDocuments, setShowDocuments] = useState(false);
-  
+  const [showCategories, setShowCategories] = useState(false);
+
   const [selectedRegion, setSelectedRegion] = useState("Bütün bölgələr");
   const [selectedSort, setSelectedSort] = useState(""); // nearToFar, farToNear, createdAt
   const [selectedEventType, setSelectedEventType] = useState("Bütün növlər");
   const [selectedPayment, setSelectedPayment] = useState("Hamısı");
   const [selectedDocument, setSelectedDocument] = useState("Hamısı");
-  
+  const [selectedCategory, setSelectedCategory] = useState("Hamısı");
+
   const [tempRegion, setTempRegion] = useState("Bütün bölgələr");
   const [tempSort, setTempSort] = useState("");
   const [tempEventType, setTempEventType] = useState("Bütün növlər");
   const [tempPayment, setTempPayment] = useState("Hamısı");
   const [tempDocument, setTempDocument] = useState("Hamısı");
+  const [tempCategory, setTempCategory] = useState("Hamısı");
+
+  // Statik kateqoriyalar - Əyləncə və Karyera əsas kateqoriyaları
+  const categories = {
+    "Əyləncə": [
+      "Konsert",
+      "Teatr",
+      "Festival",
+      "Film",
+      "Oyun gecəsi",
+      "Stand-up",
+      "Musiqi",
+      "Rəqs"
+    ],
+    "Karyera": [
+      "Seminar",
+      "Konfrans",
+      "Workshop",
+      "Networking",
+      "Təlim",
+      "Mentorluq",
+      "İş yarmarkası",
+      "Startap"
+    ]
+  };
   
   // Animasyon değerleri
   const contentAnim = React.useRef(new Animated.Value(0)).current;
@@ -131,11 +160,12 @@ export const GlobalModalProvider = ({ children }) => {
   ).current;
 
   // Aktif filtre var mı kontrolü
-  const hasActiveFilters = selectedRegion !== "Bütün bölgələr" || 
-                          selectedSort !== "" || 
+  const hasActiveFilters = selectedRegion !== "Bütün bölgələr" ||
+                          selectedSort !== "" ||
                           selectedEventType !== "Bütün növlər" ||
                           selectedPayment !== "Hamısı" ||
-                          selectedDocument !== "Hamısı";
+                          selectedDocument !== "Hamısı" ||
+                          selectedCategory !== "Hamısı";
   
   // Modal gösterme fonksiyonu
   const showModal = () => {
@@ -145,12 +175,14 @@ export const GlobalModalProvider = ({ children }) => {
     setTempEventType(selectedEventType);
     setTempPayment(selectedPayment);
     setTempDocument(selectedDocument);
-    
+    setTempCategory(selectedCategory);
+
     // Tüm dropdownları kapat
     setShowRegions(false);
     setShowEventTypes(false);
     setShowPayments(false);
     setShowDocuments(false);
+    setShowCategories(false);
     
     // Önce filter position'ı sıfırla, ardından modalVisible'ı true yap
     filterAnim.setValue(width);
@@ -209,7 +241,7 @@ export const GlobalModalProvider = ({ children }) => {
     }, 300); // Animasyon süresiyle aynı
   };
 
-  // Filtreleri uygulama fonksiyonu 
+  // Filtreleri uygulama fonksiyonu
   const applyFilters = () => {
     // Geçici değerleri asıl state'lere aktar
     setSelectedRegion(tempRegion);
@@ -217,7 +249,8 @@ export const GlobalModalProvider = ({ children }) => {
     setSelectedEventType(tempEventType);
     setSelectedPayment(tempPayment);
     setSelectedDocument(tempDocument);
-    
+    setSelectedCategory(tempCategory);
+
     // Modalı kapat
     hideModal();
   };
@@ -230,6 +263,7 @@ export const GlobalModalProvider = ({ children }) => {
     setTempEventType("Bütün növlər");
     setTempPayment("Hamısı");
     setTempDocument("Hamısı");
+    setTempCategory("Hamısı");
   };
 
   // Tüm filtreleri varsayılan değerlere sıfırlama fonksiyonu
@@ -240,13 +274,15 @@ export const GlobalModalProvider = ({ children }) => {
     setSelectedEventType("Bütün növlər");
     setSelectedPayment("Hamısı");
     setSelectedDocument("Hamısı");
-    
+    setSelectedCategory("Hamısı");
+
     // Geçici filtreleri de sıfırla
     setTempRegion("Bütün bölgələr");
     setTempSort("");
     setTempEventType("Bütün növlər");
     setTempPayment("Hamısı");
     setTempDocument("Hamısı");
+    setTempCategory("Hamısı");
   };
 
   // Dile göre bölge listesi
@@ -354,11 +390,12 @@ export const GlobalModalProvider = ({ children }) => {
   ];
 
   // Filtrelerin aktif olup olmadığını kontrol et
-  const hasActiveTemp = tempRegion !== "Bütün bölgələr" || 
-                       tempSort !== "" || 
+  const hasActiveTemp = tempRegion !== "Bütün bölgələr" ||
+                       tempSort !== "" ||
                        tempEventType !== "Bütün növlər" ||
                        tempPayment !== "Hamısı" ||
-                       tempDocument !== "Hamısı";
+                       tempDocument !== "Hamısı" ||
+                       tempCategory !== "Hamısı";
 
   // Toggle dropdown mantığı - eğer aynı dropdown'a basılırsa kapat, farklı ise diğerlerini kapat
   const toggleDropdown = (dropdown) => {
@@ -367,21 +404,31 @@ export const GlobalModalProvider = ({ children }) => {
       setShowEventTypes(false);
       setShowPayments(false);
       setShowDocuments(false);
+      setShowCategories(false);
     } else if (dropdown === 'eventTypes') {
       setShowRegions(false);
       setShowEventTypes(!showEventTypes);
       setShowPayments(false);
       setShowDocuments(false);
+      setShowCategories(false);
     } else if (dropdown === 'payments') {
       setShowRegions(false);
       setShowEventTypes(false);
       setShowPayments(!showPayments);
       setShowDocuments(false);
+      setShowCategories(false);
     } else if (dropdown === 'documents') {
       setShowRegions(false);
       setShowEventTypes(false);
       setShowPayments(false);
       setShowDocuments(!showDocuments);
+      setShowCategories(false);
+    } else if (dropdown === 'categories') {
+      setShowRegions(false);
+      setShowEventTypes(false);
+      setShowPayments(false);
+      setShowDocuments(false);
+      setShowCategories(!showCategories);
     }
   };
 
@@ -508,14 +555,14 @@ export const GlobalModalProvider = ({ children }) => {
   };
 
   return (
-    <ModalContext.Provider 
+    <ModalContext.Provider
       value={{
         visible: modalVisible,
         showModal,
         hideModal,
         selectedRegion,
         setSelectedRegion,
-        selectedSort, 
+        selectedSort,
         setSelectedSort,
         selectedEventType,
         setSelectedEventType,
@@ -523,6 +570,8 @@ export const GlobalModalProvider = ({ children }) => {
         setSelectedPayment,
         selectedDocument,
         setSelectedDocument,
+        selectedCategory,
+        setSelectedCategory,
         applyFilters,
         hasActiveFilters,
         resetAllFilters
@@ -827,6 +876,143 @@ export const GlobalModalProvider = ({ children }) => {
                     </View>
                   )}
                 </View>
+
+                {/* Kateqoriya seçimi */}
+                <View style={dynamicStyles.filterSection}>
+                  <Text style={dynamicStyles.sectionTitle}>Kateqoriya</Text>
+                  <TouchableOpacity
+                    style={dynamicStyles.dropdownButton}
+                    onPress={() => toggleDropdown('categories')}
+                  >
+                    <Text style={dynamicStyles.dropdownButtonText}>{tempCategory}</Text>
+                    <Ionicons
+                      name={showCategories ? "chevron-up" : "chevron-down"}
+                      size={24}
+                      color={isDarkMode ? "#E5E7EB" : "#444"}
+                    />
+                  </TouchableOpacity>
+
+                  {/* Kateqoriya Dropdown listesi */}
+                  {showCategories && (
+                    <View style={dynamicStyles.dropdownList}>
+                      <ScrollView
+                        style={{ maxHeight: 300 }}
+                        nestedScrollEnabled={true}
+                        showsVerticalScrollIndicator={true}
+                      >
+                        {/* Hamısı seçimi */}
+                        <TouchableOpacity
+                          style={[
+                            dynamicStyles.dropdownItem,
+                            tempCategory === "Hamısı" && dynamicStyles.selectedDropdownItem
+                          ]}
+                          onPress={() => {
+                            setTempCategory("Hamısı");
+                            setShowCategories(false);
+                          }}
+                        >
+                          <Text style={[
+                            dynamicStyles.dropdownItemText,
+                            tempCategory === "Hamısı" && dynamicStyles.selectedDropdownItemText
+                          ]}>Hamısı</Text>
+
+                          {tempCategory === "Hamısı" && (
+                            <Ionicons name="checkmark" size={20} color={isDarkMode ? "#818CF8" : "#4F46E5"} />
+                          )}
+                        </TouchableOpacity>
+
+                        {/* Əyləncə kateqoriyası - seçilə bilən */}
+                        <TouchableOpacity
+                          style={[
+                            dynamicStyles.dropdownItem,
+                            { backgroundColor: isDarkMode ? '#374151' : '#F3F4F6' },
+                            tempCategory === "Əyləncə" && dynamicStyles.selectedDropdownItem
+                          ]}
+                          onPress={() => {
+                            setTempCategory("Əyləncə");
+                            setShowCategories(false);
+                          }}
+                        >
+                          <Text style={[
+                            { fontWeight: 'bold', color: isDarkMode ? '#E5E7EB' : '#1F2937' },
+                            tempCategory === "Əyləncə" && dynamicStyles.selectedDropdownItemText
+                          ]}>Əyləncə</Text>
+                          {tempCategory === "Əyləncə" && (
+                            <Ionicons name="checkmark" size={20} color={isDarkMode ? "#818CF8" : "#4F46E5"} />
+                          )}
+                        </TouchableOpacity>
+                        {categories["Əyləncə"].map((category, index) => (
+                          <TouchableOpacity
+                            key={`eylence-${index}`}
+                            style={[
+                              dynamicStyles.dropdownItem,
+                              { paddingLeft: 32 },
+                              tempCategory === category && dynamicStyles.selectedDropdownItem
+                            ]}
+                            onPress={() => {
+                              setTempCategory(category);
+                              setShowCategories(false);
+                            }}
+                          >
+                            <Text style={[
+                              dynamicStyles.dropdownItemText,
+                              tempCategory === category && dynamicStyles.selectedDropdownItemText
+                            ]}>{category}</Text>
+
+                            {tempCategory === category && (
+                              <Ionicons name="checkmark" size={20} color={isDarkMode ? "#818CF8" : "#4F46E5"} />
+                            )}
+                          </TouchableOpacity>
+                        ))}
+
+                        {/* Karyera kateqoriyası - seçilə bilən */}
+                        <TouchableOpacity
+                          style={[
+                            dynamicStyles.dropdownItem,
+                            { backgroundColor: isDarkMode ? '#374151' : '#F3F4F6' },
+                            tempCategory === "Karyera" && dynamicStyles.selectedDropdownItem
+                          ]}
+                          onPress={() => {
+                            setTempCategory("Karyera");
+                            setShowCategories(false);
+                          }}
+                        >
+                          <Text style={[
+                            { fontWeight: 'bold', color: isDarkMode ? '#E5E7EB' : '#1F2937' },
+                            tempCategory === "Karyera" && dynamicStyles.selectedDropdownItemText
+                          ]}>Karyera</Text>
+                          {tempCategory === "Karyera" && (
+                            <Ionicons name="checkmark" size={20} color={isDarkMode ? "#818CF8" : "#4F46E5"} />
+                          )}
+                        </TouchableOpacity>
+                        {categories["Karyera"].map((category, index) => (
+                          <TouchableOpacity
+                            key={`karyera-${index}`}
+                            style={[
+                              dynamicStyles.dropdownItem,
+                              { paddingLeft: 32 },
+                              tempCategory === category && dynamicStyles.selectedDropdownItem
+                            ]}
+                            onPress={() => {
+                              setTempCategory(category);
+                              setShowCategories(false);
+                            }}
+                          >
+                            <Text style={[
+                              dynamicStyles.dropdownItemText,
+                              tempCategory === category && dynamicStyles.selectedDropdownItemText
+                            ]}>{category}</Text>
+
+                            {tempCategory === category && (
+                              <Ionicons name="checkmark" size={20} color={isDarkMode ? "#818CF8" : "#4F46E5"} />
+                            )}
+                          </TouchableOpacity>
+                        ))}
+                      </ScrollView>
+                    </View>
+                  )}
+                </View>
+
                 {/* Dropdownlar için ekstra boşluk */}
                 <View style={{ height: 80 }} />
               </ScrollView>

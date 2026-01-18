@@ -153,8 +153,6 @@ export default function Home() {
   const [totalEventCount, setTotalEventCount] = useState(0);
   const [error, setError] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
-  const [categories, setCategories] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState("Bütün sahələr");
   // Aktif filtre durumunu izlemek için yeni state
   const [hasActiveUserFilter, setHasActiveUserFilter] = useState(false);
   
@@ -168,10 +166,10 @@ export default function Home() {
   
   // GlobalModal hook'unu kullan
   const globalModal = useGlobalModal();
-  const { 
-    selectedRegion, 
-    setSelectedRegion, 
-    selectedSort, 
+  const {
+    selectedRegion,
+    setSelectedRegion,
+    selectedSort,
     setSelectedSort,
     selectedEventType,
     setSelectedEventType,
@@ -179,7 +177,8 @@ export default function Home() {
     setSelectedPayment,
     selectedDocument,
     setSelectedDocument,
-    hasActiveFilters 
+    selectedCategory,
+    hasActiveFilters
   } = globalModal;
   
   // sortOrder state'ini selectedSort ile senkronize et
@@ -229,21 +228,41 @@ export default function Home() {
         if (!validEvent) return false;
       }
 
-      // Kategori, arama ve bölge filtreleri
-      const matchCategory = selectedCategory === "Bütün sahələr" || event.eventcategory === selectedCategory;
+      // Arama ve bölge filtreleri
       const matchSearch = event.eventname?.toLowerCase().includes(search.toLowerCase()) ||
                          event.eventtext?.toLowerCase().includes(search.toLowerCase()) ||
                          event.eventRegion?.toLowerCase().includes(search.toLowerCase());
       const matchRegion = selectedRegion === "Bütün bölgələr" || event.eventRegion === selectedRegion;
       const matchEventType = selectedEventType === "Bütün növlər" || event.eventType === selectedEventType;
-      
+
       // Ödeme ve belge filtrelerini uygula
       const matchPayment = selectedPayment === "Hamısı" || event.payment === selectedPayment;
       const matchDocument = selectedDocument === "Hamısı" || event.eventDocument === selectedDocument;
 
-      return matchCategory && matchSearch && matchRegion && matchEventType && matchPayment && matchDocument;
+      // Kateqoriya filtresini uygula
+      // Əsas kateqoriyaların alt kateqoriyaları
+      const eylenceSubcategories = ["Konsert", "Teatr", "Festival", "Film", "Oyun gecəsi", "Stand-up", "Musiqi", "Rəqs"];
+      const karyeraSubcategories = ["Seminar", "Konfrans", "Workshop", "Networking", "Təlim", "Mentorluq", "İş yarmarkası", "Startap"];
+
+      let matchCategory = false;
+      const eventCategory = event.eventcategory || event.category;
+
+      if (selectedCategory === "Hamısı") {
+        matchCategory = true;
+      } else if (selectedCategory === "Əyləncə") {
+        // Əyləncə seçildikdə, Əyləncə və ya onun alt kateqoriyalarına uyğun olanları göstər
+        matchCategory = eventCategory === "Əyləncə" || eylenceSubcategories.includes(eventCategory);
+      } else if (selectedCategory === "Karyera") {
+        // Karyera seçildikdə, Karyera və ya onun alt kateqoriyalarına uyğun olanları göstər
+        matchCategory = eventCategory === "Karyera" || karyeraSubcategories.includes(eventCategory);
+      } else {
+        // Alt kateqoriya seçildikdə
+        matchCategory = eventCategory === selectedCategory;
+      }
+
+      return matchSearch && matchRegion && matchEventType && matchPayment && matchDocument && matchCategory;
     });
-  }, [selectedCategory, search, selectedRegion, selectedEventType, selectedPayment, selectedDocument]);
+  }, [search, selectedRegion, selectedEventType, selectedPayment, selectedDocument, selectedCategory]);
 
   // Events sıralama fonksiyonu
   const sortEvents = useCallback((events) => {
@@ -277,36 +296,6 @@ export default function Home() {
     });
   }, [sortOrder, selectedRegion, selectedEventType, selectedPayment, selectedDocument, search]);
   
-  // Kategorileri getirme fonksiyonu
-  const fetchCategories = useCallback(async () => {
-    try {
-      const querySnapshot = await getDocs(collection(db, "categories"));
-      let categoriesList = querySnapshot.docs.map((doc) => doc.data().name);
-      
-      // Kategori listesini özel sıralamaya göre düzenle
-      // 1. "Texnologiya" kategorisini başa taşı
-      const texnologiyaIndex = categoriesList.findIndex(cat => cat === "Texnologiya");
-      if (texnologiyaIndex !== -1) {
-        // "Texnologiya" kategorisini listeden çıkar
-        const texnologiya = categoriesList.splice(texnologiyaIndex, 1)[0];
-        // Listenin başına ekle
-        categoriesList.unshift(texnologiya);
-      }
-      
-      // 2. "Digər" kategorisini sona taşı
-      const digerIndex = categoriesList.findIndex(cat => cat === "Digər");
-      if (digerIndex !== -1) {
-        // "Digər" kategorisini listeden çıkar
-        const diger = categoriesList.splice(digerIndex, 1)[0];
-        // Listenin sonuna ekle
-        categoriesList.push(diger);
-      }
-      
-      setCategories(categoriesList);
-    } catch (error) {
-      console.error("❌ Kategoriler yüklenirken hata:", error.message);
-    }
-  }, []);
   
   // Yaklaşan etkinlikleri getirme fonksiyonu
   const fetchUpcomingEvents = useCallback(async () => {
@@ -524,29 +513,29 @@ export default function Home() {
   
   // Filtreleme state'ini güncelleyen fonksiyon
   const updateFilterState = useCallback(() => {
-    const isFiltered = 
-      search.trim() !== "" || 
-      selectedCategory !== "Bütün sahələr" || 
-      selectedRegion !== "Bütün bölgələr" || 
+    const isFiltered =
+      search.trim() !== "" ||
+      selectedRegion !== "Bütün bölgələr" ||
       selectedEventType !== "Bütün növlər" ||
       selectedPayment !== "Hamısı" ||
       selectedDocument !== "Hamısı" ||
+      selectedCategory !== "Hamısı" ||
       sortOrder !== "";
-      
+
     // Filtre durumu değişirse:
     if (isFiltered !== hasActiveUserFilter) {
-      // Filtre kaldırıldığında ve yakın etkinlikler gösterilecekse 
+      // Filtre kaldırıldığında ve yakın etkinlikler gösterilecekse
       if (!isFiltered && hasActiveUserFilter) {
         // Önce placeholder göster, sonra yakın etkinlikleri getir
         setUpcomingEventsLoading(true);
         setUpcomingEvents([]);
         fetchUpcomingEvents();
       }
-      
+
       // State'i güncelle
       setHasActiveUserFilter(isFiltered);
     }
-  }, [search, selectedCategory, selectedRegion, selectedEventType, selectedPayment, selectedDocument, sortOrder, hasActiveUserFilter, fetchUpcomingEvents]);
+  }, [search, selectedRegion, selectedEventType, selectedPayment, selectedDocument, selectedCategory, sortOrder, hasActiveUserFilter, fetchUpcomingEvents]);
   
   // Arama işlemi
   const handleSearch = useCallback((text) => {
@@ -585,25 +574,19 @@ export default function Home() {
         }
       }, 300); // Filtre uygulanırken placeholderlar görünebilsin
     }
-  }, [selectedRegion, selectedEventType, selectedPayment, selectedDocument, sortOrder, search, selectedCategory, allEvents, filterEvents, sortEvents]);
+  }, [selectedRegion, selectedEventType, selectedPayment, selectedDocument, selectedCategory, sortOrder, search, allEvents, filterEvents, sortEvents]);
   
-  // Kategoriler değiştiğinde client-side filtreleme yapma, fetchEvents çağırma. 
-  // Çünkü fetchEvents zaten yukarıdaki useEffect'i tetikler.
+  // Veri yüklenmemişse fetchEvents çağır
   useEffect(() => {
     if (allEvents.length > 0) {
-      // Eğer ilk kez veri yüklendiyse, fetchEvents çağır
-      // Aksi takdirde tekrar yüklenmesi gerekmiyor, çünkü yukarıdaki effect zaten filtreleme yapıyor 
       return;
     }
-    
-    // Henüz veri yüklenmemişse, fetchEvents çağır
+
     fetchEvents();
-  }, [selectedCategory, allEvents.length, fetchEvents]);
+  }, [allEvents.length, fetchEvents]);
 
   // İlk yükleme
   useEffect(() => {
-    fetchCategories();
-    
     // İlk yüklemede bütün verileri sırayla getir
     const loadInitialData = async () => {
       try {
@@ -611,7 +594,7 @@ export default function Home() {
         if (allEvents.length === 0) {
           await fetchEvents();
         }
-        
+
         // Eğer filtre yoksa, ana veriler geldikten sonra yakın etkinlikleri getir
         if (!hasActiveUserFilter) {
           fetchUpcomingEvents();
@@ -623,15 +606,15 @@ export default function Home() {
         console.error("İlk yükleme hatası:", error);
       }
     };
-    
+
     loadInitialData();
-    
+
     return () => {
       if (timerRef.current) {
         clearInterval(timerRef.current);
       }
     };
-  }, [fetchCategories, fetchUpcomingEvents, fetchEvents, hasActiveUserFilter, allEvents.length]);
+  }, [fetchUpcomingEvents, fetchEvents, hasActiveUserFilter, allEvents.length]);
   
   // Filtrelerin değişimini izle ve filtreleme durumunu güncelle
   useEffect(() => {
@@ -856,77 +839,6 @@ export default function Home() {
             <Ionicons name="notifications-outline" size={20} color={isDarkMode ? "#818CF8" : "#4F46E5"} />
           </TouchableOpacity>
         </View>
-
-        {/* Kategoriler */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="px-4 pb-2">
-          <View className="mr-2">
-            <TouchableOpacity 
-              className={`px-4 py-2 rounded-full border ${
-                selectedCategory === "Bütün sahələr" 
-                  ? "bg-indigo-600 border-indigo-600" 
-                  : isDarkMode
-                    ? "bg-gray-800 border-gray-700"
-                    : "bg-white border-gray-300"
-              }`}
-              onPress={() => {
-                setSelectedCategory("Bütün sahələr");
-                // updateFilterState useEffect ile otomatik çağrılacak
-              }}
-            >
-              <Text className={selectedCategory === "Bütün sahələr" ? "text-white" : isDarkMode ? "text-gray-200" : "text-gray-800"}>
-                {t.events.all}
-              </Text>
-            </TouchableOpacity>
-          </View>
-          
-          {categories.map((category, index) => (
-            <View 
-              key={category} 
-              className={`${index === categories.length - 1 ? 'mr-4' : 'mr-2'}`}
-            >
-              <TouchableOpacity 
-                className={`px-4 py-2 rounded-full border ${
-                  selectedCategory === category 
-                    ? "bg-indigo-600 border-indigo-600" 
-                    : isDarkMode
-                      ? "bg-gray-800 border-gray-700"
-                      : "bg-white border-gray-300"
-                }`}
-                onPress={() => {
-                  // Kategori seçildiğinde aynı anda loading'i başlat
-                  if (category !== selectedCategory) {
-                    setLoading(true);
-                    
-                    // Tüm sahələr'e dönüş yaptıysa ve filtre durumu aktifse
-                    if (category === "Bütün sahələr" && hasActiveUserFilter) {
-                      // Eğer başka bir filtre yoksa, yakın etkinlikleri de getir
-                      const otherFiltersActive = 
-                        search.trim() !== "" || 
-                        selectedRegion !== "Bütün bölgələr" || 
-                        selectedEventType !== "Bütün növlər" ||
-                        selectedPayment !== "Hamısı" ||
-                        selectedDocument !== "Hamısı" ||
-                        sortOrder !== "";
-                      
-                      if (!otherFiltersActive) {
-                        // Yakın etkinliklerin yükleme durumunu aktifleştir
-                        setUpcomingEventsLoading(true);
-                        setUpcomingEvents([]);
-                      }
-                    }
-                  }
-                  
-                  setSelectedCategory(category);
-                  // updateFilterState useEffect ile otomatik çağrılacak
-                }}
-              >
-                <Text className={selectedCategory === category ? "text-white" : isDarkMode ? "text-gray-200" : "text-gray-800"}>
-                  {category}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          ))}
-        </ScrollView>
       </View>
 
       {/* Ana scroll view - Kalan içerik */}

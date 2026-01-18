@@ -1,17 +1,18 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { 
-  View, 
-  Text, 
-  TextInput, 
-  TouchableOpacity, 
-  ScrollView, 
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
   StatusBar,
   ActivityIndicator,
   Dimensions,
   FlatList,
   RefreshControl,
   Animated,
-  Alert
+  Alert,
+  Modal
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -31,9 +32,8 @@ export default function Organiser() {
   const { language } = useLanguage();
   const t = translations[language];
   
-  // State'ler
   const [search, setSearch] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("Bütün sahələr");
+  const [selectedCategory, setSelectedCategory] = useState("Hamısı");
   const [loading, setLoading] = useState(true);
   const [followersLoading, setFollowersLoading] = useState(true);
   const [allOrganisers, setAllOrganisers] = useState([]);
@@ -41,64 +41,55 @@ export default function Organiser() {
   const [totalOrganiserCount, setTotalOrganiserCount] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
-  const [categories, setCategories] = useState([]);
   const [popularOrganisers, setPopularOrganisers] = useState([]);
   const [popularLoading, setPopularLoading] = useState(true);
   const [popularFollowersLoading, setPopularFollowersLoading] = useState(true);
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [tempCategory, setTempCategory] = useState("Hamısı");
   const scrollX = useRef(new Animated.Value(0)).current;
   const flatListRef = useRef(null);
   const currentIndex = useRef(0);
   const timerRef = useRef(null);
   const scrollViewRef = useRef(null);
   const router = useRouter();
-  
-  
-  const fetchCategories = useCallback(async () => {
-    try {
-      const querySnapshot = await getDocs(collection(db, "categories"));
-      let categoriesList = querySnapshot.docs.map((doc) => doc.data().name);
-      
-      // Kategori listesini özel sıralamaya göre düzenle
-      // 1. "Texnologiya" kategorisini başa taşı
-      const texnologiyaIndex = categoriesList.findIndex(cat => cat === "Texnologiya");
-      if (texnologiyaIndex !== -1) {
-        // "Texnologiya" kategorisini listeden çıkar
-        const texnologiya = categoriesList.splice(texnologiyaIndex, 1)[0];
-        // Listenin başına ekle
-        categoriesList.unshift(texnologiya);
-      }
-      
-      // 2. "Digər" kategorisini sona taşı
-      const digerIndex = categoriesList.findIndex(cat => cat === "Digər");
-      if (digerIndex !== -1) {
-        // "Digər" kategorisini listeden çıkar
-        const diger = categoriesList.splice(digerIndex, 1)[0];
-        // Listenin sonuna ekle
-        categoriesList.push(diger);
-      }
-      
-      setCategories(categoriesList);
-    } catch (error) {
-      console.error("❌ Kategoriler yüklenirken hata:", error.message);
-    }
-  }, []);
-  
-  // Organizatörleri getirme
+
+  const categories = {
+    "Əyləncə": [
+      "Konsert",
+      "Teatr",
+      "Festival",
+      "Film",
+      "Oyun gecəsi",
+      "Stand-up",
+      "Musiqi",
+      "Rəqs"
+    ],
+    "Karyera": [
+      "Seminar",
+      "Konfrans",
+      "Workshop",
+      "Networking",
+      "Təlim",
+      "Mentorluq",
+      "İş yarmarkası",
+      "Startap"
+    ]
+  };
+
+  const hasActiveFilter = selectedCategory !== "Hamısı";
+
   const fetchOrganisers = useCallback(async () => {
     try {
       setLoading(true);
       
-      // Collection referansı
       const organisersRef = collection(db, "users");
       
-      // Sadece organizatörleri getir
       const q = query(
         organisersRef,
         where("registerType", "==", "organiser"),
         orderBy("createdAt", "desc")
       );
       
-      // Toplam organizatör sayısını al
       const countQuery = query(
         organisersRef,
         where("registerType", "==", "organiser")
@@ -106,29 +97,24 @@ export default function Organiser() {
       const countSnapshot = await getCountFromServer(countQuery);
       setTotalOrganiserCount(countSnapshot.data().count);
       
-      // Organizatörleri getir
       const querySnapshot = await getDocs(q);
       
-      // Organizerleri takipçi sayısı olmadan al - böylece hızlıca gösterebiliriz
       const organisers = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
-        followersCount: 0 // İlk başta takipçi sayısını 0 olarak ayarla
+        followersCount: 0 
       }));
       
       setAllOrganisers(organisers);
       setFilteredOrganisers(organisers);
       setLoading(false);
       
-      // Takipçi sayılarını ayrı olarak getir
       setFollowersLoading(true);
       
-      // Her bir organizatör için takipçi sayısını getir
       const organisersWithFollowers = await Promise.all(
         querySnapshot.docs.map(async (doc) => {
           const organiserData = { id: doc.id, ...doc.data() };
           
-          // Takipçi sayısını kontrol et
           try {
             const followersRef = collection(db, "users", doc.id, "followers");
             const followersSnapshot = await getCountFromServer(followersRef);
@@ -146,7 +132,6 @@ export default function Organiser() {
         })
       );
       
-      // Takipçi sayıları alındıktan sonra güncelleyelim
       setAllOrganisers(organisersWithFollowers);
       setFilteredOrganisers(organisersWithFollowers);
       
@@ -159,15 +144,12 @@ export default function Organiser() {
     }
   }, []);
   
-  // Popüler organizatörleri getirme
   const fetchPopularOrganisers = useCallback(async () => {
     try {
       setPopularLoading(true);
       
-      // Collection referansı
       const organisersRef = collection(db, "users");
       
-      // Sadece organizatörleri getir
       const q = query(
         organisersRef,
         where("registerType", "==", "organiser")
@@ -179,23 +161,19 @@ export default function Organiser() {
       const organisers = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
-        followersCount: 0 // İlk başta takipçi sayısını 0 olarak ayarla
+        followersCount: 0 
       }));
       
-      // Hızlı başlangıç için organizerleri göster (10 tane)
       const initialPopular = organisers.slice(0, 10);
       setPopularOrganisers(initialPopular);
       setPopularLoading(false);
       
-      // Takipçi sayılarını ayrı olarak getir
       setPopularFollowersLoading(true);
       
-      // Her bir organizatör için takipçi sayısını getir
       const organisersWithFollowers = await Promise.all(
         querySnapshot.docs.map(async (doc) => {
           const organiserData = { id: doc.id, ...doc.data() };
           
-          // Takipçi sayısını kontrol et
           try {
             const followersRef = collection(db, "users", doc.id, "followers");
             const followersSnapshot = await getCountFromServer(followersRef);
@@ -212,11 +190,10 @@ export default function Organiser() {
         })
       );
       
-      // Takipçi sayısına göre sırala ve en az 1 takipçisi olanları filtrele
       const popular = organisersWithFollowers
         .filter(org => org.followersCount > 0)
         .sort((a, b) => b.followersCount - a.followersCount)
-        .slice(0, 10); // En çok takipçisi olan 10 organizatör
+        .slice(0, 10); 
       
       setPopularOrganisers(popular.length > 0 ? popular : initialPopular);
       
@@ -251,26 +228,39 @@ export default function Organiser() {
   useEffect(() => {
     fetchOrganisers();
     fetchPopularOrganisers();
-    fetchCategories();
-  }, [fetchOrganisers, fetchPopularOrganisers, fetchCategories]);
+  }, [fetchOrganisers, fetchPopularOrganisers]);
   
   // Arama ve filtreleme
   useEffect(() => {
     if (!allOrganisers || allOrganisers.length === 0) return;
-    
+
+    // Əsas kateqoriyaların alt kateqoriyaları
+    const eylenceSubcategories = ["Konsert", "Teatr", "Festival", "Film", "Oyun gecəsi", "Stand-up", "Musiqi", "Rəqs"];
+    const karyeraSubcategories = ["Seminar", "Konfrans", "Workshop", "Networking", "Təlim", "Mentorluq", "İş yarmarkası", "Startap"];
+
     // Arama ve kategori filtreleme
     const filtered = allOrganisers.filter(organiser => {
       // İsim araması
-      const nameMatch = organiser.companyName && 
+      const nameMatch = organiser.companyName &&
         organiser.companyName.toLowerCase().includes(search.toLowerCase());
-      
+
       // Kategori filtresi
-      const categoryMatch = selectedCategory === "Bütün sahələr" || 
-        (organiser.sector && organiser.sector === selectedCategory);
-      
+      let categoryMatch = false;
+      const organiserSector = organiser.sector;
+
+      if (selectedCategory === "Hamısı") {
+        categoryMatch = true;
+      } else if (selectedCategory === "Əyləncə") {
+        categoryMatch = organiserSector === "Əyləncə" || eylenceSubcategories.includes(organiserSector);
+      } else if (selectedCategory === "Karyera") {
+        categoryMatch = organiserSector === "Karyera" || karyeraSubcategories.includes(organiserSector);
+      } else {
+        categoryMatch = organiserSector === selectedCategory;
+      }
+
       return nameMatch && categoryMatch;
     });
-    
+
     setFilteredOrganisers(filtered);
   }, [allOrganisers, search, selectedCategory]);
   
@@ -278,19 +268,35 @@ export default function Organiser() {
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     setSearch("");
-    
+
     try {
       await Promise.all([
         fetchOrganisers(),
-        fetchPopularOrganisers(),
-        fetchCategories()
+        fetchPopularOrganisers()
       ]);
     } catch (error) {
       console.error("Yenileme hatası:", error);
     } finally {
       setRefreshing(false);
     }
-  }, [fetchOrganisers, fetchPopularOrganisers, fetchCategories]);
+  }, [fetchOrganisers, fetchPopularOrganisers]);
+
+  // Filter modalını açma
+  const openFilterModal = () => {
+    setTempCategory(selectedCategory);
+    setShowFilterModal(true);
+  };
+
+  // Filter uygulama
+  const applyFilter = () => {
+    setSelectedCategory(tempCategory);
+    setShowFilterModal(false);
+  };
+
+  // Filter sıfırlama
+  const resetFilter = () => {
+    setTempCategory("Hamısı");
+  };
   
   // Organizatöre tıklama
   const handleOrganiserPress = (organiser) => {
@@ -325,9 +331,8 @@ export default function Organiser() {
       <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} backgroundColor={isDarkMode ? "#111827" : "#F9FAFB"} />
       
 
-      {/* Üst bölüm - Sabit kalacak */}
-      <View >
-        {/* Search ve Notification bar */}
+      <View>
+        {/* Search ve Filter bar */}
         <View className="flex-row px-4 py-2 items-center justify-between">
           <View className={`flex-row flex-1 rounded-lg px-3 h-12 mr-2 items-center border ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
             <Ionicons name="search" size={20} color={isDarkMode ? "#9CA3AF" : "#9CA3AF"} />
@@ -345,49 +350,21 @@ export default function Organiser() {
               </TouchableOpacity>
             )}
           </View>
-        </View>
-
-        {/* Kategoriler */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="px-4 pb-2">
-          <View className="mr-2">
-            <TouchableOpacity 
-              className={`px-4 py-2 rounded-full border ${
-                selectedCategory === "Bütün sahələr" 
-                  ? "bg-indigo-600 border-indigo-600" 
-                  : isDarkMode 
-                    ? "bg-gray-800 border-gray-700" 
-                    : "bg-white border-gray-300"
-              }`}
-              onPress={() => setSelectedCategory("Bütün sahələr")}
-            >
-              <Text className={`${selectedCategory === "Bütün sahələr" ? "text-white" : isDarkMode ? "text-gray-200" : "text-gray-700"}`}>
-                {t.general.allCategories}
-              </Text>
-            </TouchableOpacity>
-          </View>
-          
-          {categories.map((category, index) => (
-            <View   
-            key={category} 
-            className={`${index === categories.length - 1 ? 'mr-4' : 'mr-2'}`}
+          <TouchableOpacity
+            className={`p-3 h-12 rounded-lg border`}
+            style={{
+              backgroundColor: hasActiveFilter ? '#4F46E5' : (isDarkMode ? '#1f2937' : 'white'),
+              borderColor: isDarkMode ? '#374151' : '#e5e7eb'
+            }}
+            onPress={openFilterModal}
           >
-              <TouchableOpacity 
-                className={`px-4 py-2 rounded-full border ${
-                  selectedCategory === category 
-                    ? "bg-indigo-600 border-indigo-600" 
-                    : isDarkMode 
-                      ? "bg-gray-800 border-gray-700" 
-                      : "bg-white border-gray-300"
-                }`}
-                onPress={() => setSelectedCategory(category)}
-              >
-                <Text className={`${selectedCategory === category ? "text-white" : isDarkMode ? "text-gray-200" : "text-gray-700"}`}>
-                  {category}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          ))}
-        </ScrollView>
+            <Ionicons
+              name="funnel-outline"
+              size={20}
+              color={hasActiveFilter ? "#FFFFFF" : (isDarkMode ? '#818CF8' : '#4F46E5')}
+            />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Scrollable Content */}
@@ -400,7 +377,7 @@ export default function Organiser() {
         className={isDarkMode ? 'bg-gray-900' : 'bg-white'}
       >
         {/* Favori Təşkilatçılar Bölümü */}
-        <View className="mt-2 px-4">
+        {/* <View className="mt-2 px-4">
           <Text className={`text-lg font-bold text-center mb-3 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
             {t.organisers.favorite}
           </Text>
@@ -494,7 +471,7 @@ export default function Organiser() {
               </Text>
             </View>
           )}
-        </View>
+        </View> */}
         
         {/* Təşkilatçılar */}
         <View className="mt-8 px-4 pb-24">
@@ -536,6 +513,192 @@ export default function Organiser() {
           )}
         </View>
       </ScrollView>
+
+      {/* Kateqoriya Filter Modal */}
+      <Modal
+        visible={showFilterModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowFilterModal(false)}
+      >
+        <View className="flex-1 bg-black/50 justify-end">
+          <View
+            className="rounded-t-3xl"
+            style={{
+              backgroundColor: isDarkMode ? '#1f2937' : 'white',
+              maxHeight: '80%'
+            }}
+          >
+            {/* Header */}
+            <View className="flex-row justify-between items-center p-4 border-b" style={{ borderColor: isDarkMode ? '#374151' : '#e5e7eb' }}>
+              <TouchableOpacity onPress={() => setShowFilterModal(false)}>
+                <Ionicons name="close" size={24} color={isDarkMode ? '#9ca3af' : '#6B7280'} />
+              </TouchableOpacity>
+              <Text className="text-lg font-bold" style={{ color: isDarkMode ? '#ffffff' : '#1f2937' }}>
+                Kateqoriya
+              </Text>
+              {tempCategory !== "Hamısı" && (
+                <TouchableOpacity onPress={resetFilter}>
+                  <Text style={{ color: '#4F46E5' }}>Sıfırla</Text>
+                </TouchableOpacity>
+              )}
+              {tempCategory === "Hamısı" && <View style={{ width: 50 }} />}
+            </View>
+
+            {/* Categories List */}
+            <ScrollView className="p-4" contentContainerStyle={{ paddingBottom: 20 }}>
+              {/* Əsas kateqoriyalar - 3 buton yan-yana */}
+              <View className="flex-row" style={{ marginBottom: 16 }}>
+                {/* Hamısı butonu */}
+                <TouchableOpacity
+                  className="flex-row items-center justify-center py-2 px-3"
+                  style={{
+                    flex: 1,
+                    backgroundColor: tempCategory === "Hamısı" ? '#4F46E5' : (isDarkMode ? '#374151' : '#f3f4f6'),
+                    borderRadius: 8,
+                    marginRight: 4
+                  }}
+                  onPress={() => setTempCategory("Hamısı")}
+                >
+                  <Ionicons
+                    name="apps"
+                    size={16}
+                    color={tempCategory === "Hamısı" ? '#ffffff' : (isDarkMode ? '#e5e7eb' : '#374151')}
+                    style={{ marginRight: 4 }}
+                  />
+                  <Text style={{
+                    fontWeight: '600',
+                    fontSize: 13,
+                    color: tempCategory === "Hamısı" ? '#ffffff' : (isDarkMode ? '#e5e7eb' : '#374151')
+                  }}>
+                    Hamısı
+                  </Text>
+                </TouchableOpacity>
+
+                {/* Əyləncə butonu */}
+                <TouchableOpacity
+                  className="flex-row items-center justify-center py-2 px-3"
+                  style={{
+                    flex: 1,
+                    backgroundColor: tempCategory === "Əyləncə" ? '#4F46E5' : (isDarkMode ? '#374151' : '#f3f4f6'),
+                    borderRadius: 8,
+                    marginHorizontal: 4
+                  }}
+                  onPress={() => setTempCategory("Əyləncə")}
+                >
+                  <Ionicons
+                    name="musical-notes"
+                    size={16}
+                    color={tempCategory === "Əyləncə" ? '#ffffff' : (isDarkMode ? '#e5e7eb' : '#374151')}
+                    style={{ marginRight: 4 }}
+                  />
+                  <Text style={{
+                    fontWeight: '600',
+                    fontSize: 13,
+                    color: tempCategory === "Əyləncə" ? '#ffffff' : (isDarkMode ? '#e5e7eb' : '#374151')
+                  }}>
+                    Əyləncə
+                  </Text>
+                </TouchableOpacity>
+
+                {/* Karyera butonu */}
+                <TouchableOpacity
+                  className="flex-row items-center justify-center py-2 px-3"
+                  style={{
+                    flex: 1,
+                    backgroundColor: tempCategory === "Karyera" ? '#4F46E5' : (isDarkMode ? '#374151' : '#f3f4f6'),
+                    borderRadius: 8,
+                    marginLeft: 4
+                  }}
+                  onPress={() => setTempCategory("Karyera")}
+                >
+                  <Ionicons
+                    name="briefcase"
+                    size={16}
+                    color={tempCategory === "Karyera" ? '#ffffff' : (isDarkMode ? '#e5e7eb' : '#374151')}
+                    style={{ marginRight: 4 }}
+                  />
+                  <Text style={{
+                    fontWeight: '600',
+                    fontSize: 13,
+                    color: tempCategory === "Karyera" ? '#ffffff' : (isDarkMode ? '#e5e7eb' : '#374151')
+                  }}>
+                    Karyera
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Alt kateqoriyalar - 2 sütunda */}
+              <View className="flex-row">
+                {/* Əyləncə alt kateqoriyaları */}
+                <View style={{ flex: 1, paddingRight: 8 }}>
+                  {categories["Əyləncə"].map((category, index) => (
+                    <TouchableOpacity
+                      key={`eylence-${index}`}
+                      className="flex-row justify-between items-center py-2 border-b"
+                      style={{ borderColor: isDarkMode ? '#374151' : '#f3f4f6' }}
+                      onPress={() => setTempCategory(category)}
+                    >
+                      <Text style={{
+                        color: tempCategory === category ? '#4F46E5' : (isDarkMode ? '#e5e7eb' : '#374151'),
+                        fontWeight: tempCategory === category ? 'bold' : 'normal',
+                        fontSize: 14
+                      }}>
+                        {category}
+                      </Text>
+                      {tempCategory === category && (
+                        <Ionicons name="checkmark" size={16} color="#4F46E5" />
+                      )}
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                {/* Orta xətt */}
+                <View style={{
+                  width: 1,
+                  backgroundColor: isDarkMode ? '#374151' : '#e5e7eb'
+                }} />
+
+                {/* Karyera alt kateqoriyaları */}
+                <View style={{ flex: 1, paddingLeft: 8 }}>
+                  {categories["Karyera"].map((category, index) => (
+                    <TouchableOpacity
+                      key={`karyera-${index}`}
+                      className="flex-row justify-between items-center py-2 border-b"
+                      style={{ borderColor: isDarkMode ? '#374151' : '#f3f4f6' }}
+                      onPress={() => setTempCategory(category)}
+                    >
+                      <Text style={{
+                        color: tempCategory === category ? '#4F46E5' : (isDarkMode ? '#e5e7eb' : '#374151'),
+                        fontWeight: tempCategory === category ? 'bold' : 'normal',
+                        fontSize: 14
+                      }}>
+                        {category}
+                      </Text>
+                      {tempCategory === category && (
+                        <Ionicons name="checkmark" size={16} color="#4F46E5" />
+                      )}
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            </ScrollView>
+
+            {/* Tətbiq et butonu */}
+            <View className="p-4" style={{ borderTopWidth: 1, borderColor: isDarkMode ? '#374151' : '#e5e7eb' }}>
+              <TouchableOpacity
+                className="py-4 rounded-lg items-center"
+                style={{ backgroundColor: '#4F46E5' }}
+                onPress={applyFilter}
+              >
+                <Text style={{ color: '#ffffff', fontWeight: 'bold', fontSize: 16 }}>
+                  Tətbiq et
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 } 

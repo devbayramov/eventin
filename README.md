@@ -6,7 +6,7 @@ A modern event management mobile application built with React Native and Expo.
 > **Date:** April 5, 2025 | 10:15 PM
 
 ### 📸 Build Evidence (Expo Dashboard)
-![Expo Build History](./assets/expo-build-screenshot.png)
+![Expo Build History](./assets/expo-build-ss.png)
 *This screenshot confirms the build version and the timeline of the project's evolution on the Expo Dev platform.*
 
 ---

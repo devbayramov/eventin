@@ -127,6 +127,20 @@ export const translations = {
       english: 'İngilis dili',
       russian: 'Rus dili'
     },
+    // Bildiriş ayarları
+    notifications: {
+      title: 'Bildiriş Ayarları',
+      allNotifications: 'Bütün bildirişlər',
+      eventReminders: 'Tədbir xatırlatmaları',
+      newEvents: 'Yeni tədbirlər',
+      followedOrganisers: 'İzlədiyim təşkilatçılar',
+      promotions: 'Kampaniyalar və endirimlər',
+      enabled: 'Aktiv',
+      disabled: 'Deaktiv',
+      permissionRequired: 'Bildiriş icazəsi tələb olunur',
+      permissionDenied: 'Bildiriş icazəsi rədd edildi. Ayarlardan aktiv edə bilərsiniz.',
+      settingsSaved: 'Bildiriş ayarları yadda saxlanıldı'
+    },
     // Tabs
     tabs: {
       home: "Ana səhifə",
@@ -433,6 +447,20 @@ export const translations = {
       english: 'English',
       russian: 'Russian'
     },
+    // Notification settings
+    notifications: {
+      title: 'Notification Settings',
+      allNotifications: 'All notifications',
+      eventReminders: 'Event reminders',
+      newEvents: 'New events',
+      followedOrganisers: 'Followed organisers',
+      promotions: 'Promotions and discounts',
+      enabled: 'Enabled',
+      disabled: 'Disabled',
+      permissionRequired: 'Notification permission required',
+      permissionDenied: 'Notification permission denied. You can enable it from settings.',
+      settingsSaved: 'Notification settings saved'
+    },
     // Tabs
     tabs: {
       home: "Home",
@@ -738,6 +766,20 @@ export const translations = {
       azerbaijani: 'Азербайджанский',
       english: 'Английский',
       russian: 'Русский'
+    },
+    // Настройки уведомлений
+    notifications: {
+      title: 'Настройки уведомлений',
+      allNotifications: 'Все уведомления',
+      eventReminders: 'Напоминания о мероприятиях',
+      newEvents: 'Новые мероприятия',
+      followedOrganisers: 'Отслеживаемые организаторы',
+      promotions: 'Акции и скидки',
+      enabled: 'Включено',
+      disabled: 'Отключено',
+      permissionRequired: 'Требуется разрешение на уведомления',
+      permissionDenied: 'Разрешение на уведомления отклонено. Вы можете включить его в настройках.',
+      settingsSaved: 'Настройки уведомлений сохранены'
     },
     // Tabs
     tabs: {

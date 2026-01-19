@@ -1,18 +1,80 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, StatusBar } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { auth, db } from "../../firebaseConfig";
-import { signInWithEmailAndPassword, signOut } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import { signInWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithCredential } from "firebase/auth";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import * as Google from "expo-auth-session/providers/google";
+import * as WebBrowser from "expo-web-browser";
+import Constants from "expo-constants";
+
+WebBrowser.maybeCompleteAuthSession();
 
 export default function LoginScreen() {
   const router = useRouter();
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+
+  const { googleWebClientId, googleIosClientId, googleAndroidClientId } = Constants.expoConfig.extra;
+
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    webClientId: googleWebClientId,
+    iosClientId: googleIosClientId,
+    androidClientId: googleAndroidClientId,
+  });
+
+  useEffect(() => {
+    if (response?.type === "success") {
+      const { id_token } = response.params;
+      handleGoogleSignIn(id_token);
+    }
+  }, [response]);
+
+  const handleGoogleSignIn = async (idToken) => {
+    try {
+      setGoogleLoading(true);
+      setErrorMessage("");
+
+      const credential = GoogleAuthProvider.credential(idToken);
+      const userCredential = await signInWithCredential(auth, credential);
+
+      if (userCredential.user) {
+        const userRef = doc(db, "users", userCredential.user.uid);
+        const userSnap = await getDoc(userRef);
+
+        if (userSnap.exists()) {
+          const userData = userSnap.data();
+          if (userData.deActive) {
+            setErrorMessage("Hesabınız deaktivdir");
+            await signOut(auth);
+            setGoogleLoading(false);
+            return;
+          }
+        } else {
+          // Yeni Google istifadəçisi - Firestore-da profil yarat
+          await setDoc(userRef, {
+            email: userCredential.user.email,
+            displayName: userCredential.user.displayName || "",
+            photoURL: userCredential.user.photoURL || "",
+            createdAt: new Date().toISOString(),
+            provider: "google",
+          });
+        }
+
+        router.replace("/(tabs)/home");
+      }
+    } catch (error) {
+      console.error("Google giriş xətası:", error);
+      setErrorMessage("Google ilə giriş zamanı xəta baş verdi");
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
 
   const handleChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -23,7 +85,7 @@ export default function LoginScreen() {
       setLoading(true);
       setErrorMessage("");
 
-      // Email ve şifre kontrolü
+      
       if (!formData.email || !formData.password) {
         setErrorMessage("Email və şifrəni daxil edin");
         setLoading(false);
@@ -174,10 +236,10 @@ export default function LoginScreen() {
           </View>
 
           {/* Giriş Düyməsi */}
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={handleLogin}
             className="bg-indigo-600 rounded-lg py-3 mt-4"
-            disabled={loading}
+            disabled={loading || googleLoading}
           >
             {loading ? (
               <ActivityIndicator color="#fff" />
@@ -185,6 +247,31 @@ export default function LoginScreen() {
               <Text className="text-white font-semibold text-center text-base">
                 Daxil ol
               </Text>
+            )}
+          </TouchableOpacity>
+
+          {/* Ayırıcı */}
+          <View className="flex-row items-center my-4">
+            <View className="flex-1 h-px bg-gray-300" />
+            <Text className="mx-4 text-gray-500 text-sm">və ya</Text>
+            <View className="flex-1 h-px bg-gray-300" />
+          </View>
+
+          {/* Google ilə Giriş Düyməsi */}
+          <TouchableOpacity
+            onPress={() => promptAsync()}
+            className="flex-row items-center justify-center bg-white border border-gray-300 rounded-lg py-3"
+            disabled={!request || loading || googleLoading}
+          >
+            {googleLoading ? (
+              <ActivityIndicator color="#4285F4" />
+            ) : (
+              <>
+                <Ionicons name="logo-google" size={20} color="#4285F4" style={{ marginRight: 8 }} />
+                <Text className="text-gray-700 font-semibold text-base">
+                  Google ilə daxil ol
+                </Text>
+              </>
             )}
           </TouchableOpacity>
         </View>

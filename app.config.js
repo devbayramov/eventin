@@ -12,6 +12,7 @@ export default ({ config }) => ({
 
     ios: {
       supportsTablet: true,
+      bundleIdentifier: "com.eventin.app",
     },
 
     android: {
@@ -21,6 +22,7 @@ export default ({ config }) => ({
       },
       edgeToEdgeEnabled: true,
       predictiveBackGestureEnabled: false,
+      package: "com.eventin.app",
     },
 
     web: {
@@ -42,6 +44,14 @@ export default ({ config }) => ({
           },
         },
       ],
+      [
+        "expo-notifications",
+        {
+          icon: "./assets/app-icon.png",
+          color: "#6366f1",
+          sounds: [],
+        },
+      ],
     ],
 
     experiments: {
@@ -56,6 +66,12 @@ export default ({ config }) => ({
       firebaseStorageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
       firebaseMessagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
       firebaseAppId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
+      googleWebClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+      googleIosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+      googleAndroidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
+      eas: {
+        projectId: "41b04da9-7852-4895-9150-5a64b8345080",
+      },
     },
   },
 });

@@ -28,6 +28,9 @@ expo-env.d.ts
 # Firebase
 google-services.json
 GoogleService-Info.plist
+functions/serviceAccountKey.json
+firebase-debug.log
+.firebase/
 
 # Metro
 .metro-health-check*

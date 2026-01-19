@@ -9,6 +9,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { enableScreens } from "react-native-screens";
 import { AuthProvider } from '../context/auth';
 import { LanguageProvider } from '../context/language';
+import { NotificationsProvider } from '../context/notifications';
 import { ThemeProvider, useTheme } from '../context/theme';
 import { auth } from '../firebaseConfig';
 import "../global.css";
@@ -107,9 +108,11 @@ export default function RootLayout() {
         <AuthProvider>
           <ThemeProvider>
             <LanguageProvider>
-              <GlobalModalProvider>
-                <RootLayoutNav user={user} />
-              </GlobalModalProvider>
+              <NotificationsProvider>
+                <GlobalModalProvider>
+                  <RootLayoutNav user={user} />
+                </GlobalModalProvider>
+              </NotificationsProvider>
             </LanguageProvider>
           </ThemeProvider>
         </AuthProvider>

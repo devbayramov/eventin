@@ -487,7 +487,7 @@ export default function Organiser() {
           
           {loading ? (
             <View className="flex justify-between">
-              {renderPlaceholders(4, () => <PlaceholderOrganiserCard isDarkMode={isDarkMode} />)}
+              {renderPlaceholders(6, () => <PlaceholderOrganiserCard isDarkMode={isDarkMode} />)}
             </View>
           ) : filteredOrganisers.length > 0 ? (
             <View className="flex-row flex-wrap justify-between">

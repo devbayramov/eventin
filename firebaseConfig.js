@@ -34,14 +34,15 @@ let auth;
 if (Platform.OS === 'web') {
   auth = getAuth(app);
 } else {
- 
-  try {
-    auth = getAuth(app);
-  } catch (error) {
-   console.log('Firebase auth initialization error:', error);
+  // React Native üçün AsyncStorage ilə persistence təyin et
+  if (getApps().length === 1) {
+    // App yeni initialize olubsa, initializeAuth istifadə et
     auth = initializeAuth(app, {
       persistence: getReactNativePersistence(AsyncStorage),
     });
+  } else {
+    // App artıq initialize olubsa, getAuth istifadə et
+    auth = getAuth(app);
   }
 }
 export const storage = getStorage(app);

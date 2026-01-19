@@ -8,10 +8,12 @@ import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Alert, Image, Linking, Modal, ScrollView, StatusBar, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { LanguageType, translations, useLanguage } from '../../context/language';
+import { useNotifications } from '../../context/notifications';
 import { ThemeType, useTheme } from '../../context/theme';
 import { auth, db, storage } from "../../firebaseConfig";
 import { useThemeStyles } from '../../utils/theme-styles';
-
+ import { sendNotificationToUser } from '../../utils/sendNotification';                                                                 
+  
 // Profil düzenleme modal bileşeni
 const ProfileModalComponent = ({ visible, onClose, userData, onSave, loading }) => {
   const { isDarkMode } = useTheme();
@@ -463,6 +465,100 @@ const LanguageModalComponent = ({ visible, onClose, currentLanguage, onLanguageC
   );
 };
 
+// Bildiriş ayarları modal bileşeni
+const NotificationsModalComponent = ({ visible, onClose, settings, onUpdateSetting, onToggleAll }) => {
+  const { isDarkMode } = useTheme();
+  const { language } = useLanguage();
+  const t = translations[language];
+
+  const NotificationSwitch = ({ label, value, onToggle, isMain = false }) => (
+    <TouchableOpacity
+      className={`flex-row items-center justify-between p-4 ${!isMain ? `border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}` : ''} ${value ? isDarkMode ? 'bg-gray-700' : 'bg-indigo-50' : ''}`}
+      onPress={() => onToggle(!value)}
+    >
+      <Text className={`${isDarkMode ? 'text-gray-200' : 'text-gray-700'} text-base ${isMain ? 'font-semibold' : ''}`}>
+        {label}
+      </Text>
+      <View className={`w-12 h-7 rounded-full ${value ? 'bg-indigo-600' : isDarkMode ? 'bg-gray-600' : 'bg-gray-300'} justify-center`}>
+        <View
+          className={`w-5 h-5 rounded-full bg-white shadow ${value ? 'ml-6' : 'ml-1'}`}
+        />
+      </View>
+    </TouchableOpacity>
+  );
+
+  return (
+    <Modal
+      animationType="fade"
+      transparent={true}
+      visible={visible}
+      onRequestClose={onClose}
+    >
+      <View style={{
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0,0,0,0.6)',
+        padding: 20,
+      }}>
+        <View className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} p-6 rounded-xl w-11/12 mx-2`}>
+          <Text className={`text-xl font-bold mb-5 text-center ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+            {t.notifications?.title || 'Bildiriş Ayarları'}
+          </Text>
+
+          {/* Ana Switch - Bütün bildirişlər */}
+          <View className={`mb-4 rounded-lg overflow-hidden border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+            <NotificationSwitch
+              label={t.notifications?.allNotifications || 'Bütün bildirişlər'}
+              value={settings.allNotifications}
+              onToggle={(value) => onToggleAll(value)}
+              isMain={true}
+            />
+          </View>
+
+          {/* Alt ayarlar */}
+          <View className={`rounded-lg overflow-hidden border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+            <NotificationSwitch
+              label={t.notifications?.eventReminders || 'Tədbir xatırlatmaları'}
+              value={settings.eventReminders}
+              onToggle={(value) => onUpdateSetting('eventReminders', value)}
+            />
+
+            <NotificationSwitch
+              label={t.notifications?.newEvents || 'Yeni tədbirlər'}
+              value={settings.newEvents}
+              onToggle={(value) => onUpdateSetting('newEvents', value)}
+            />
+
+            <NotificationSwitch
+              label={t.notifications?.followedOrganisers || 'İzlədiyim təşkilatçılar'}
+              value={settings.followedOrganisers}
+              onToggle={(value) => onUpdateSetting('followedOrganisers', value)}
+            />
+
+            <NotificationSwitch
+              label={t.notifications?.promotions || 'Kampaniyalar və endirimlər'}
+              value={settings.promotions}
+              onToggle={(value) => onUpdateSetting('promotions', value)}
+            />
+          </View>
+
+          <View className="flex-row justify-center mt-5">
+            <TouchableOpacity
+              className={`${isDarkMode ? 'bg-gray-600' : 'bg-gray-300'} py-3 px-6 rounded-lg`}
+              onPress={onClose}
+            >
+              <Text className={`${isDarkMode ? 'text-white' : 'text-gray-800'} font-medium`}>
+                {t.profile.close}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+};
+
 // İletişim modal bileşeni
 const ContactModalComponent = ({ visible, onClose, defaultEmail, defaultPhone, onSubmit, loading, mesajGonderildi, xeta }) => {
   const { isDarkMode } = useTheme();
@@ -628,13 +724,17 @@ export default function Profile() {
   // Language context
   const { language, setLanguage } = useLanguage();
   const t = translations[language];
-  
+
+  // Notifications context
+  const { settings: notificationSettings, updateSetting, toggleAllNotifications } = useNotifications();
+
   // Modal durumları
   const [profileModalVisible, setProfileModalVisible] = useState(false);
   const [passwordModalVisible, setPasswordModalVisible] = useState(false);
   const [themeModalVisible, setThemeModalVisible] = useState(false);
   const [contactModalVisible, setContactModalVisible] = useState(false);
   const [languageModalVisible, setLanguageModalVisible] = useState(false);
+  const [notificationsModalVisible, setNotificationsModalVisible] = useState(false);
   
   // Form verileri 
   const [profileForm, setProfileForm] = useState({
@@ -924,8 +1024,24 @@ export default function Profile() {
       <View className="p-4">
         {/* Profil Bilgileri */}
         {loadingUserData ? <ProfilePlaceholder /> : <ProfileInfo />}
-      
+        
+
+       {/* <TouchableOpacity onPress={async () => {                                                                                            
+    const userId = auth.currentUser?.uid;                                                                                             
+    if (userId) {                                                                                                                     
+      await sendNotificationToUser(                                                                                                   
+        userId,                                                                                                                       
+        'Alqasim oglanlari',                                                                                                             
+        'vorzakondur'                                                                                                        
+      );                                                                                                                              
+    }                                                                                                                                 
+  }}>                                                                                                                                 
+    <Text>Test Bildirişi Göndər</Text>                                                                                                
+  </TouchableOpacity>   */}
+
+
       {/* Ayarlar Bölümü */}
+
       <View className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl px-4 py-1 mb-6 shadow-sm`}>
           {/* Tedbirlerim */}
           <TouchableOpacity
@@ -984,14 +1100,17 @@ export default function Profile() {
           <Ionicons name="chevron-forward" size={20} color={isDarkMode ? "#9ca3af" : "#9ca3af"} style={{ marginLeft: 'auto' }} />
         </TouchableOpacity>
         
-          {/* Bildirisler */}
-          {/* <TouchableOpacity className={`flex-row items-center py-3 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
-          <Ionicons name="notifications-outline" size={22} color={isDarkMode ? "#818cf8" : "#6366f1"} />
-          <Text className={`ml-3 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
-            {t.profile.notifications}
-          </Text>
-          <Ionicons name="chevron-forward" size={20} color={isDarkMode ? "#9ca3af" : "#9ca3af"} style={{ marginLeft: 'auto' }} />
-        </TouchableOpacity> */}
+          {/* Bildirişlər */}
+          <TouchableOpacity
+            className={`flex-row items-center py-3 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}
+            onPress={() => setNotificationsModalVisible(true)}
+          >
+            <Ionicons name="notifications-outline" size={22} color={isDarkMode ? "#818cf8" : "#6366f1"} />
+            <Text className={`ml-3 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+              {t.profile.notifications}
+            </Text>
+            <Ionicons name="chevron-forward" size={20} color={isDarkMode ? "#9ca3af" : "#9ca3af"} style={{ marginLeft: 'auto' }} />
+          </TouchableOpacity>
           
           {/* Tema */}
           <TouchableOpacity 
@@ -1064,13 +1183,21 @@ export default function Profile() {
         onThemeChange={handleThemeChange}
       />
       
-      <LanguageModalComponent 
-        visible={languageModalVisible} 
-        onClose={() => setLanguageModalVisible(false)} 
+      <LanguageModalComponent
+        visible={languageModalVisible}
+        onClose={() => setLanguageModalVisible(false)}
         currentLanguage={language}
         onLanguageChange={handleLanguageChange}
       />
-      
+
+      <NotificationsModalComponent
+        visible={notificationsModalVisible}
+        onClose={() => setNotificationsModalVisible(false)}
+        settings={notificationSettings}
+        onUpdateSetting={updateSetting}
+        onToggleAll={toggleAllNotifications}
+      />
+
       <ContactModalComponent 
         visible={contactModalVisible} 
         onClose={() => {

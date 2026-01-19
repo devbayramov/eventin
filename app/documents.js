@@ -126,7 +126,7 @@ export default function Documents() {
     }
     
     const fetchData = async () => {
-      setLoading(true); // İşlem başladığında loading'i true yap
+      setLoading(true); 
       try {
         const userRef = doc(db, "users", userId);
         const userSnap = await getDoc(userRef);
@@ -1365,7 +1365,7 @@ export default function Documents() {
                   {translations[language]?.documents?.documentDetails || "Sənəd Detalları"}
                 </Text>
                 <TouchableOpacity onPress={closeDetailModal} className="p-1">
-                  <AntDesign name="closecircle" size={24} color="#FF3B30" />
+                  <AntDesign name="close" size={24} color="#FF3B30" />
                 </TouchableOpacity>
               </View>
               

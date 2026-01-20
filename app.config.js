@@ -9,6 +9,10 @@ export default ({ config }) => ({
     scheme: "eventin",
     userInterfaceStyle: "automatic",
     newArchEnabled: true,
+    notification: {
+      icon: "./assets/splash-icon.png",
+      color: "#6366f1",
+    },
 
     ios: {
       supportsTablet: true,
@@ -23,6 +27,8 @@ export default ({ config }) => ({
       edgeToEdgeEnabled: true,
       predictiveBackGestureEnabled: false,
       package: "com.eventin.app",
+      googleServicesFile: "./google-services.json"
+
     },
 
     web: {
@@ -35,7 +41,7 @@ export default ({ config }) => ({
       [
         "expo-splash-screen",
         {
-          image: "./assets/images/splash-icon.png",
+          image: "./assets/splash-icon.png",
           imageWidth: 200,
           resizeMode: "contain",
           backgroundColor: "#ffffff",

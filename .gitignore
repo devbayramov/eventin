@@ -26,7 +26,6 @@ expo-env.d.ts
 .env.production
 
 # Firebase
-google-services.json
 GoogleService-Info.plist
 functions/serviceAccountKey.json
 firebase-debug.log

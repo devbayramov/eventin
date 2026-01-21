@@ -7,7 +7,7 @@ import { Platform } from 'react-native';
 import { getStorage } from 'firebase/storage';
 import { getFirestore } from 'firebase/firestore';
 import Constants from "expo-constants";
-
+console.log(Constants.expoConfig.extra);
 const {
   firebaseApiKey,
   firebaseAuthDomain,

@@ -4,7 +4,8 @@ import { Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from 'expo-splash-screen';
 import { onAuthStateChanged } from "firebase/auth";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, StatusBar, useColorScheme, View } from "react-native";
+import { ActivityIndicator, StatusBar, useColorScheme, View, Image } from "react-native";
+import { LinearGradient } from 'expo-linear-gradient';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { enableScreens } from "react-native-screens";
 import { AuthProvider } from '../context/auth';
@@ -96,9 +97,17 @@ export default function RootLayout() {
 
   if (!appIsReady) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#ffffff' }}>
-        <ActivityIndicator size="large" color="#6366f1" />
-      </View>
+      <LinearGradient
+        colors={['#9654cf', '#cb55e4']}
+        style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}
+      >
+        <Image
+          source={require('../assets/splash-icon.png')}
+          style={{ width: 150, height: 150, marginBottom: 20 }}
+          resizeMode="contain"
+        />
+        <ActivityIndicator size="large" color="#ffffff" />
+      </LinearGradient>
     );
   }
 

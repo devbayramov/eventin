@@ -27,7 +27,7 @@ export default ({ config }) => ({
       edgeToEdgeEnabled: true,
       predictiveBackGestureEnabled: false,
       package: "com.eventin.app",
-      googleServicesFile: "./google-services.json"
+      googleServicesFile:  "./google-services.json" 
 
     },
 

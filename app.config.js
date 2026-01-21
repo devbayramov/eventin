@@ -27,7 +27,7 @@ export default ({ config }) => ({
       edgeToEdgeEnabled: true,
       predictiveBackGestureEnabled: false,
       package: "com.eventin.app",
-      googleServicesFile: "./google-services.json"
+      googleServicesFile:  "./google-services.json" 
 
     },
 
@@ -44,9 +44,9 @@ export default ({ config }) => ({
           image: "./assets/splash-icon.png",
           imageWidth: 200,
           resizeMode: "contain",
-          backgroundColor: "#ffffff",
+          backgroundColor: "#9654cf",
           dark: {
-            backgroundColor: "#000000",
+            backgroundColor: "#9654cf",
           },
         },
       ],

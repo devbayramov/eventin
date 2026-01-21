@@ -12,12 +12,12 @@ const slides = [
   {
     key: '1',
     image: require('../assets/appSlide1.png'),
-    text: 'Sahənizə uyğun tədbirləri asanlıqla tapın',
+    text: 'Hər növdən tədbirləri asanlıqla tapın',
   },
   {
     key: '2',
     image: require('../assets/appSlide2.png'), 
-    text: 'Tədbirlərə qatılın və yeni uğurlara imza atın',
+    text: 'Tədbirlərə qeydiyyat olun və bilet alın',
   },
   {
     key: '3',
@@ -57,7 +57,7 @@ export default function WelcomeScreen() {
   if (loading) {
     return (
       <LinearGradient
-        colors={['#6366f1', '#3b82f6', '#0ea5e9']}
+        colors={['#6366f1', '#3030deff', '#793cc3ff']}
         className="flex-1 items-center justify-center"
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
@@ -69,7 +69,7 @@ export default function WelcomeScreen() {
 
   return (
     <LinearGradient
-      colors={['#6366f1', '#3b82f6', '#0ea5e9']}
+        colors={['#6366f1', '#3030deff', '#793cc3ff']}
       className="flex-1 items-center justify-between p-8"
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}

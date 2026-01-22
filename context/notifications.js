@@ -9,6 +9,7 @@ import { db, auth } from '../firebaseConfig';
 
 const NOTIFICATION_SETTINGS_KEY = '@notification_settings';
 const PUSH_TOKEN_KEY = '@push_token';
+const NOTIFICATIONS_LIST_KEY = '@notifications_list';
 
 // Push token-i Firestore-a saxla
 export const savePushTokenToFirestore = async (token) => {
@@ -66,6 +67,13 @@ const NotificationsContext = createContext({
   expoPushToken: null,
   notification: null,
   registerForPushNotifications: () => {},
+  // Bildiriş siyahısı üçün yeni funksiyalar
+  notificationsList: [],
+  unreadCount: 0,
+  markAsRead: () => {},
+  markAllAsRead: () => {},
+  clearAllNotifications: () => {},
+  addNotification: () => {},
 });
 
 // Register for push notifications
@@ -120,9 +128,13 @@ export const NotificationsProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [expoPushToken, setExpoPushToken] = useState(null);
   const [notification, setNotification] = useState(null);
+  const [notificationsList, setNotificationsList] = useState([]);
 
   const notificationListener = useRef();
   const responseListener = useRef();
+
+  // Oxunmamış bildiriş sayı
+  const unreadCount = notificationsList.filter(n => !n.read).length;
 
   // Load saved settings and register for push notifications on mount
   useEffect(() => {
@@ -138,6 +150,12 @@ export const NotificationsProvider = ({ children }) => {
         const savedToken = await AsyncStorage.getItem(PUSH_TOKEN_KEY);
         if (savedToken) {
           setExpoPushToken(savedToken);
+        }
+
+        // Load saved notifications list
+        const savedNotifications = await AsyncStorage.getItem(NOTIFICATIONS_LIST_KEY);
+        if (savedNotifications) {
+          setNotificationsList(JSON.parse(savedNotifications));
         }
 
         // Register for push notifications
@@ -160,6 +178,20 @@ export const NotificationsProvider = ({ children }) => {
     // Listen for incoming notifications
     notificationListener.current = Notifications.addNotificationReceivedListener((notification) => {
       setNotification(notification);
+      // Bildirişi siyahıya əlavə et
+      const newNotification = {
+        id: notification.request.identifier || Date.now().toString(),
+        title: notification.request.content.title,
+        body: notification.request.content.body,
+        data: notification.request.content.data,
+        receivedAt: new Date().toISOString(),
+        read: false,
+      };
+      setNotificationsList(prev => {
+        const updated = [newNotification, ...prev];
+        AsyncStorage.setItem(NOTIFICATIONS_LIST_KEY, JSON.stringify(updated));
+        return updated;
+      });
     });
 
     // Listen for notification interactions
@@ -238,6 +270,49 @@ export const NotificationsProvider = ({ children }) => {
     return token;
   };
 
+  // Bildirişi oxunmuş kimi işarələ
+  const markAsRead = async (notificationId) => {
+    setNotificationsList(prev => {
+      const updated = prev.map(n =>
+        n.id === notificationId ? { ...n, read: true } : n
+      );
+      AsyncStorage.setItem(NOTIFICATIONS_LIST_KEY, JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  // Bütün bildirişləri oxunmuş kimi işarələ
+  const markAllAsRead = async () => {
+    setNotificationsList(prev => {
+      const updated = prev.map(n => ({ ...n, read: true }));
+      AsyncStorage.setItem(NOTIFICATIONS_LIST_KEY, JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  // Bütün bildirişləri sil
+  const clearAllNotifications = async () => {
+    setNotificationsList([]);
+    await AsyncStorage.removeItem(NOTIFICATIONS_LIST_KEY);
+  };
+
+  // Manuel bildiriş əlavə et (test üçün və ya local notifications üçün)
+  const addNotification = async (title, body, data = {}) => {
+    const newNotification = {
+      id: Date.now().toString(),
+      title,
+      body,
+      data,
+      receivedAt: new Date().toISOString(),
+      read: false,
+    };
+    setNotificationsList(prev => {
+      const updated = [newNotification, ...prev];
+      AsyncStorage.setItem(NOTIFICATIONS_LIST_KEY, JSON.stringify(updated));
+      return updated;
+    });
+  };
+
   return (
     <NotificationsContext.Provider
       value={{
@@ -248,6 +323,13 @@ export const NotificationsProvider = ({ children }) => {
         expoPushToken,
         notification,
         registerForPushNotifications,
+        // Bildiriş siyahısı üçün yeni funksiyalar
+        notificationsList,
+        unreadCount,
+        markAsRead,
+        markAllAsRead,
+        clearAllNotifications,
+        addNotification,
       }}
     >
       {children}

@@ -103,7 +103,7 @@ export default function RootLayout() {
       >
         <Image
           source={require('../assets/splash-icon.png')}
-          style={{ width: 100, height: 100 }}
+          style={{ width: 130, height: 80 }}
           resizeMode="contain"
         />
         <ActivityIndicator size="large" color="#ffffff" />

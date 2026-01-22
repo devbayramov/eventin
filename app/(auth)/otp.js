@@ -7,6 +7,9 @@ import { doc, setDoc } from "firebase/firestore";
 import { db } from "../../firebaseConfig";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../../firebaseConfig";
+import { savePushTokenToFirestore } from "../../context/notifications";
+import * as Notifications from 'expo-notifications';
+import Constants from 'expo-constants';
 
 export default function OTPScreen() {
   const router = useRouter();
@@ -56,6 +59,17 @@ export default function OTPScreen() {
         deActive: false,
         createdAt: new Date(),
       });
+
+      // Push token-i al və Firestore-a saxla
+      try {
+        const projectId = Constants.expoConfig?.extra?.eas?.projectId ?? '41b04da9-7852-4895-9150-5a64b8345080';
+        const tokenData = await Notifications.getExpoPushTokenAsync({ projectId });
+        if (tokenData?.data) {
+          await savePushTokenToFirestore(tokenData.data);
+        }
+      } catch (tokenError) {
+        console.log('Push token alınarkən xəta:', tokenError);
+      }
 
       router.replace("/");
     } catch (error) {

@@ -6,6 +6,8 @@ import { LinearGradient } from "expo-linear-gradient";
 import { auth, db } from "../../firebaseConfig";
 import { signInWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithCredential } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
+import { savePushTokenToFirestore } from "../../context/notifications";
+import * as Notifications from 'expo-notifications';
 import * as Google from "expo-auth-session/providers/google";
 import * as WebBrowser from "expo-web-browser";
 import Constants from "expo-constants";
@@ -66,6 +68,17 @@ export default function LoginScreen() {
           });
         }
 
+        // Push token-i yenilə və Firestore-a saxla
+        try {
+          const projectId = Constants.expoConfig?.extra?.eas?.projectId ?? '41b04da9-7852-4895-9150-5a64b8345080';
+          const tokenData = await Notifications.getExpoPushTokenAsync({ projectId });
+          if (tokenData?.data) {
+            await savePushTokenToFirestore(tokenData.data);
+          }
+        } catch (tokenError) {
+          console.log('Push token alınarkən xəta:', tokenError);
+        }
+
         router.replace("/(tabs)/home");
       }
     } catch (error) {
@@ -121,6 +134,17 @@ export default function LoginScreen() {
             setLoading(false);
             return;
           }
+        }
+
+        // Push token-i yenilə və Firestore-a saxla
+        try {
+          const projectId = Constants.expoConfig?.extra?.eas?.projectId ?? '41b04da9-7852-4895-9150-5a64b8345080';
+          const tokenData = await Notifications.getExpoPushTokenAsync({ projectId });
+          if (tokenData?.data) {
+            await savePushTokenToFirestore(tokenData.data);
+          }
+        } catch (tokenError) {
+          console.log('Push token alınarkən xəta:', tokenError);
         }
 
         // Başarılı giriş sonrası home sayfasına yönlendir

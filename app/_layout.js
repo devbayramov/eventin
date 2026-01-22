@@ -98,12 +98,12 @@ export default function RootLayout() {
   if (!appIsReady) {
     return (
       <LinearGradient
-        colors={['#9654cf', '#cb55e4']}
+        colors={['#ffde59', '#ff914d']}
         style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}
       >
         <Image
           source={require('../assets/splash-icon.png')}
-          style={{ width: 150, height: 150, marginBottom: 20 }}
+          style={{ width: 100, height: 100 }}
           resizeMode="contain"
         />
         <ActivityIndicator size="large" color="#ffffff" />

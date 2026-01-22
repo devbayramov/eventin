@@ -11,7 +11,7 @@ export default ({ config }) => ({
     newArchEnabled: true,
     notification: {
       icon: "./assets/splash-icon.png",
-      color: "#6366f1",
+      color: "#ff914d",
     },
 
     ios: {
@@ -42,11 +42,11 @@ export default ({ config }) => ({
         "expo-splash-screen",
         {
           image: "./assets/splash-icon.png",
-          imageWidth: 200,
+          imageWidth: 100,
           resizeMode: "contain",
-          backgroundColor: "#9654cf",
+          backgroundColor: "#ff914d",
           dark: {
-            backgroundColor: "#9654cf",
+            backgroundColor: "#ff914d",
           },
         },
       ],

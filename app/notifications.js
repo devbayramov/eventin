@@ -18,24 +18,35 @@ import { useLanguage, translations } from '../context/language';
 // Bildiriş kartı komponenti
 const NotificationItem = ({ item, onPress, onMarkAsRead, isDarkMode }) => {
   const timeAgo = (dateString) => {
-    const now = new Date();
-    const date = new Date(dateString);
-    const diffMs = now - date;
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
+    if (!dateString) return '';
+    try {
+      const now = new Date();
+      const date = new Date(dateString);
+      const diffMs = now - date;
+      const diffMins = Math.floor(diffMs / 60000);
+      const diffHours = Math.floor(diffMs / 3600000);
+      const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffMins < 1) return 'İndicə';
-    if (diffMins < 60) return `${diffMins} dəq əvvəl`;
-    if (diffHours < 24) return `${diffHours} saat əvvəl`;
-    if (diffDays < 7) return `${diffDays} gün əvvəl`;
-    return date.toLocaleDateString('az-AZ');
+      if (diffMins < 1) return 'İndicə';
+      if (diffMins < 60) return `${diffMins} dəq əvvəl`;
+      if (diffHours < 24) return `${diffHours} saat əvvəl`;
+      if (diffDays < 7) return `${diffDays} gün əvvəl`;
+      return date.toLocaleDateString('az-AZ');
+    } catch (e) {
+      return '';
+    }
   };
+
+  // Null check
+  if (!item) return null;
+
+  const itemData = item.data || {};
+  const iconName = itemData.icon || 'notifications';
 
   return (
     <TouchableOpacity
       onPress={() => {
-        onMarkAsRead(item.id);
+        if (onMarkAsRead) onMarkAsRead(item.id);
         if (onPress) onPress(item);
       }}
       className={`mx-4 mb-3 p-4 rounded-xl ${
@@ -59,7 +70,7 @@ const NotificationItem = ({ item, onPress, onMarkAsRead, isDarkMode }) => {
           }`}
         >
           <Ionicons
-            name={item.data?.icon || 'notifications'}
+            name={iconName}
             size={20}
             color={item.read ? (isDarkMode ? '#6B7280' : '#9CA3AF') : '#6366F1'}
           />
@@ -124,11 +135,21 @@ export default function NotificationsScreen() {
   const [showClearModal, setShowClearModal] = useState(false);
 
   const handleNotificationPress = (notification) => {
-    // Bildirişin data-sına görə yönləndir
-    if (notification.data?.eventId) {
-      router.push(`/event-details/${notification.data.eventId}`);
-    } else if (notification.data?.route) {
-      router.push(notification.data.route);
+    try {
+      const data = notification?.data || {};
+      console.log('Notification data:', data);
+
+      // Bildirişin data-sına görə yönləndir
+      if (data.eventId) {
+        router.push({
+          pathname: '/event-details/[id]',
+          params: { id: data.eventId }
+        });
+      } else if (data.route) {
+        router.push(data.route);
+      }
+    } catch (error) {
+      console.error('Navigation error:', error);
     }
   };
 

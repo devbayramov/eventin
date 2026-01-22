@@ -57,7 +57,7 @@ export default function WelcomeScreen() {
   if (loading) {
     return (
       <LinearGradient
-        colors={['#ffde59', '#ff914d']}
+        colors={['#6366f1', '#3030deff', '#793cc3ff']}
         className="flex-1 items-center justify-center"
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
@@ -69,7 +69,7 @@ export default function WelcomeScreen() {
 
   return (
     <LinearGradient
-        colors={['#ffde59', '#ff914d']}
+        colors={['#6366f1', '#3030deff', '#793cc3ff']}
       className="flex-1 items-center justify-between p-8"
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
@@ -79,12 +79,12 @@ export default function WelcomeScreen() {
         backgroundColor="transparent" 
         translucent={true} 
       />
-      {/* Logo */}
-      <Image
+
+      {/* <Image
         source={require('../assets/splash-icon.png')}
         className="w-42 h-24 mt-8" 
         resizeMode="contain"
-      />
+      /> */}
 
       {/* Slider */}
       <View style={{ height: screenWidth }} className="mb-4">

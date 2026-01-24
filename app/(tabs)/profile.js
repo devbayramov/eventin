@@ -1,4 +1,3 @@
-// app/home.js
 import { FontAwesome, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from "expo-router";
@@ -14,7 +13,6 @@ import { auth, db, storage } from "../../firebaseConfig";
 import { useThemeStyles } from '../../utils/theme-styles';
  import { sendNotificationToUser } from '../../utils/sendNotification';                                                                 
   
-// Profil düzenleme modal bileşeni
 const ProfileModalComponent = ({ visible, onClose, userData, onSave, loading }) => {
   const { isDarkMode } = useTheme();
   const { language } = useLanguage();
@@ -91,7 +89,6 @@ const ProfileModalComponent = ({ visible, onClose, userData, onSave, loading }) 
             {t.profile.profileInfo}
           </Text>
           
-          {/* Logo Değiştirme */}
           <View className="items-center mb-5">
             <TouchableOpacity onPress={pickImage}>
               {localImage ? (
@@ -169,7 +166,6 @@ const ProfileModalComponent = ({ visible, onClose, userData, onSave, loading }) 
   );
 };
 
-// Şifre değiştirme modal bileşeni
 const PasswordModalComponent = ({ visible, onClose, onChangePassword, loading }) => {
   const { isDarkMode } = useTheme();
   const { language } = useLanguage();
@@ -302,7 +298,6 @@ const PasswordModalComponent = ({ visible, onClose, onChangePassword, loading })
   );
 };
 
-// Tema seçimi modal bileşeni
 const ThemeModalComponent = ({ visible, onClose, currentTheme, onThemeChange }) => {
   const { isDarkMode } = useTheme();
   const { language } = useLanguage();
@@ -382,7 +377,6 @@ const ThemeModalComponent = ({ visible, onClose, currentTheme, onThemeChange }) 
   );
 };
 
-// Dil seçimi modal bileşeni
 const LanguageModalComponent = ({ visible, onClose, currentLanguage, onLanguageChange }) => {
   const { isDarkMode } = useTheme();
   const { language } = useLanguage();
@@ -465,7 +459,6 @@ const LanguageModalComponent = ({ visible, onClose, currentLanguage, onLanguageC
   );
 };
 
-// Bildiriş ayarları modal bileşeni
 const NotificationsModalComponent = ({ visible, onClose, settings, onUpdateSetting, onToggleAll }) => {
   const { isDarkMode } = useTheme();
   const { language } = useLanguage();
@@ -559,7 +552,6 @@ const NotificationsModalComponent = ({ visible, onClose, settings, onUpdateSetti
   );
 };
 
-// İletişim modal bileşeni
 const ContactModalComponent = ({ visible, onClose, defaultEmail, defaultPhone, onSubmit, loading, mesajGonderildi, xeta }) => {
   const { isDarkMode } = useTheme();
   const { language } = useLanguage();
@@ -581,7 +573,6 @@ const ContactModalComponent = ({ visible, onClose, defaultEmail, defaultPhone, o
     if (mesajGonderildi) {
       setLocalMesaj('');
       
-      // Başarılı mesaj gönderiminden 3 saniye sonra modalı kapat
       const timer = setTimeout(() => {
         onClose();
       }, 3000);
@@ -620,7 +611,6 @@ const ContactModalComponent = ({ visible, onClose, defaultEmail, defaultPhone, o
           <ScrollView showsVerticalScrollIndicator={false}>
             <Text className={`text-xl font-bold mb-6 text-center ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>{t.profile.contact}</Text>
             
-            {/* Sosyal Medya İkonları */}
             <View className="w-full flex-row justify-center gap-4 mb-8">
               <TouchableOpacity onPress={() => Linking.openURL('https://t.me/+994705975727')}>
                 <FontAwesome name="telegram" size={40} color="#0088cc" />
@@ -717,18 +707,14 @@ export default function Profile() {
   const [userData, setUserData] = useState(null);
   const [loadingUserData, setLoadingUserData] = useState(true);
   
-  // Theme context
   const { theme, setTheme, isDarkMode } = useTheme();
   const { colors, pageStyles, cardStyles, textStyles } = useThemeStyles();
   
-  // Language context
   const { language, setLanguage } = useLanguage();
   const t = translations[language];
 
-  // Notifications context
   const { settings: notificationSettings, updateSetting, toggleAllNotifications } = useNotifications();
 
-  // Modal durumları
   const [profileModalVisible, setProfileModalVisible] = useState(false);
   const [passwordModalVisible, setPasswordModalVisible] = useState(false);
   const [themeModalVisible, setThemeModalVisible] = useState(false);
@@ -736,21 +722,17 @@ export default function Profile() {
   const [languageModalVisible, setLanguageModalVisible] = useState(false);
   const [notificationsModalVisible, setNotificationsModalVisible] = useState(false);
   
-  // Form verileri 
   const [profileForm, setProfileForm] = useState({
     fullName: '',
     phone: '',
     finCode: ''
   });
   
-  // İletişim formu sonuç mesajları
   const [mesajGonderildi, setMesajGonderildi] = useState("");
   const [xeta, setXeta] = useState("");
   
-  // Kullanıcı ID'sini saklamak için
   const [userId, setUserId] = useState(null);
 
-  // Çıkış modalı state'i
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   useEffect(() => {
@@ -759,10 +741,8 @@ export default function Profile() {
         const user = auth.currentUser;
         
         if (user) {
-          // Auth'dan kullanıcı ID'sini ayarla
           setUserId(user.uid);
           
-          // Firestore'dan kullanıcı verilerini al
           const userRef = doc(db, "users", user.uid);
           const userSnap = await getDoc(userRef);
           
@@ -775,7 +755,6 @@ export default function Profile() {
               finCode: data.finCode || ''
             });
           } else {
-            // Firestore'da kayıt yoksa, Auth verilerini kullan
             const defaultData = {
               fullName: user.displayName || "İstifadəçi",
               email: user.email,
@@ -789,7 +768,6 @@ export default function Profile() {
             });
           }
         } else {
-          // Kullanıcı oturum açmamış, giriş sayfasına yönlendir
           router.replace("/");
         }
       } catch (error) {
@@ -806,13 +784,10 @@ export default function Profile() {
     try {
       setLoading(true);
       
-      // Firebase'den çıkış yap
       await signOut(auth);
       
-      // UserId'yi de temizle
       setUserId(null);
       
-      // Login sayfasına yönlendir
       router.replace("/");
     } catch (error) {
       console.error("Çıkış yaparken hata oluştu:", error);
@@ -824,18 +799,14 @@ export default function Profile() {
 
   const uploadImage = async (uri) => {
     try {
-      // userId yoksa işlem yapma
       if (!userId) return null;
       
-      // Dosyayı al
       const response = await fetch(uri);
       const blob = await response.blob();
       
-      // Dosyayı yükle
       const fileRef = ref(storage, `logos/${userId}`);
       await uploadBytes(fileRef, blob);
       
-      // URL'yi al
       const downloadURL = await getDownloadURL(fileRef);
       return downloadURL;
     } catch (error) {
@@ -848,7 +819,6 @@ export default function Profile() {
     try {
       setLoading(true);
       
-      // userId kontrolü
       if (!userId) {
         Alert.alert(t.errors.errorTitle, t.errors.userNotFound);
         setLoading(false);
@@ -857,7 +827,6 @@ export default function Profile() {
       
       let logoURL = userData?.logoURL;
       
-      // Eğer yeni resim seçildiyse, yükle
       if (formData.selectedImage) {
         logoURL = await uploadImage(formData.selectedImage);
       }
@@ -870,7 +839,6 @@ export default function Profile() {
         logoURL: logoURL
       });
       
-      // UserData state'ini güncelle
       setUserData(prev => ({
         ...prev,
         fullName: formData.fullName,
@@ -893,7 +861,6 @@ export default function Profile() {
     try {
       setLoading(true);
       
-      // Şifre kontrolü
       if (passwordData.newPassword !== passwordData.confirmPassword) {
         Alert.alert(t.errors.errorTitle, t.errors.passwordMatch);
         setLoading(false);
@@ -904,16 +871,13 @@ export default function Profile() {
       
       if (user) {
         try {
-          // 1) Yeniden kimlik doğrulama için credential oluştur
           const credential = EmailAuthProvider.credential(
             user.email,
             passwordData.oldPassword
           );
           
-          // 2) Kullanıcıyı yeniden doğrula (reauthenticate)
           await reauthenticateWithCredential(user, credential);
           
-          // 3) Şifreyi güncelle
           await updatePassword(user, passwordData.newPassword);
           
           Alert.alert(t.profile.successTitle, t.profile.passwordUpdated);
@@ -945,7 +909,6 @@ export default function Profile() {
     setMesajGonderildi("");
     try {
       const user = auth.currentUser;
-      // Kullanıcı ID'sini Firebase auth'dan al
       let currentUserId = user ? user.uid : null;
       
       const yeniKontaktRef = doc(collection(db, "contacts"));
@@ -967,19 +930,16 @@ export default function Profile() {
     setLoading(false);
   };
 
-  // Tema değiştirme fonksiyonu
   const handleThemeChange = (newTheme) => {
     setTheme(newTheme);
     setThemeModalVisible(false);
   };
   
-  // Dil değiştirme fonksiyonu
   const handleLanguageChange = (newLanguage) => {
     setLanguage(newLanguage);
     setLanguageModalVisible(false);
   };
 
-  // Placeholder bileşeni
   const ProfilePlaceholder = () => (
     <View className="items-center mt-10 mb-8">
       <View className={`mb-4 w-24 h-24 rounded-full ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'}`}></View>
@@ -988,10 +948,8 @@ export default function Profile() {
     </View>
   );
 
-  // Profil bilgileri bileşeni
   const ProfileInfo = () => (
       <View className="items-center mt-10 mb-8">
-        {/* Profil Resmi */}
         <View className="mb-4">
           {userData?.logoURL ? (
             <Image 
@@ -1005,12 +963,10 @@ export default function Profile() {
           )}
         </View>
         
-        {/* Kullanıcı Adı */}
         <Text className={`text-xl font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'} mb-1`}>
           {userData?.fullName || "İstifadəçi"}
         </Text>
         
-        {/* Email */}
         <Text className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'} mb-6`}>
           {userData?.email || ""}
         </Text>
@@ -1022,25 +978,7 @@ export default function Profile() {
     <ScrollView className={isDarkMode ? "flex-1 bg-gray-900" : "flex-1 bg-gray-50"}>
      <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} backgroundColor={isDarkMode ? "#111827" : "#F9FAFB"} />
       <View className="p-4">
-        {/* Profil Bilgileri */}
         {loadingUserData ? <ProfilePlaceholder /> : <ProfileInfo />}
-        
-
-       {/* <TouchableOpacity onPress={async () => {                                                                                            
-    const userId = auth.currentUser?.uid;                                                                                             
-    if (userId) {                                                                                                                     
-      await sendNotificationToUser(                                                                                                   
-        userId,                                                                                                                       
-        'Alqasim oglanlari',                                                                                                             
-        'vorzakondur'                                                                                                        
-      );                                                                                                                              
-    }                                                                                                                                 
-  }}>                                                                                                                                 
-    <Text>Test Bildirişi Göndər</Text>                                                                                                
-  </TouchableOpacity>   */}
-
-
-      {/* Ayarlar Bölümü */}
 
       <View className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl px-4 py-1 mb-6 shadow-sm`}>
           {/* Tedbirlerim */}

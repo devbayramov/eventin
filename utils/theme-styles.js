@@ -1,6 +1,6 @@
 import { useTheme } from '../context/theme';
 
-// Tema için ortak stil özellikleri
+// Tema rəng tərtibatları
 const lightColors = {
   background: '#ffffff',
   backgroundSecondary: '#f3f4f6',
@@ -37,12 +37,12 @@ const darkColors = {
   inputBorder: '#4b5563',
 };
 
-// Tema stillerini hook olarak dışa aktarma
+// Tema stilləri hook'u
 export function useThemeStyles() {
   const { isDarkMode } = useTheme();
   const colors = isDarkMode ? darkColors : lightColors;
 
-  // Sayfa stilleri
+  // Səhifə stilləri
   const pageStyles = {
     container: {
       backgroundColor: colors.background,

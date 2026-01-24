@@ -1,4 +1,3 @@
-// app/home.js
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
@@ -31,7 +30,6 @@ import EventCard, { PlaceholderEventCard } from "../components/EventCard";
 const { width } = Dimensions.get("window");
 
 export default function Follows() {
-  // State tanımlamaları
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [followedOrganisers, setFollowedOrganisers] = useState([]);
@@ -49,10 +47,8 @@ export default function Follows() {
   const eventsPerPage = 15;
   const [isClosing, setIsClosing] = useState(false);
   
-  // Router hook'u
   const router = useRouter();
   
-  // GlobalModal hook'u
   const globalModal = useGlobalModal();
   const {
     selectedRegion,
@@ -64,11 +60,9 @@ export default function Follows() {
     hasActiveFilters
   } = globalModal;
   
-  // Theme ve Language context'lerini kullan
   const { isDarkMode } = useTheme();
   const { language } = useLanguage();
   
-  // Scroll referansı
   const scrollViewRef = useRef(null);
   
   const pan = useRef(new Animated.Value(0)).current;
@@ -106,7 +100,6 @@ export default function Follows() {
     })
   ).current;
   
-  // Kullanıcı bilgisini alma
   const getCurrentUser = useCallback(async () => {
     let user = null;
     
@@ -130,7 +123,6 @@ export default function Follows() {
     return user;
   }, []);
   
-  // Takip edilen organizatörleri getirme
   const fetchFollowedOrganisers = useCallback(async () => {
     try {
       const user = await getCurrentUser();
@@ -158,7 +150,6 @@ export default function Follows() {
         const organiserSnap = await getDoc(organiserRef);
         
         if (organiserSnap.exists()) {
-          // Takipçi sayısını getir
           const followersRef = collection(db, "users", organiserId, "followers");
           const followersSnapshot = await getCountFromServer(followersRef);
           
@@ -179,7 +170,6 @@ export default function Follows() {
     }
   }, [getCurrentUser]);
   
-  // Takip edilen organizatörlerin etkinliklerini getirme
   const fetchFollowedOrganiserEvents = useCallback(async () => {
     try {
       setLoading(true);
@@ -205,21 +195,17 @@ export default function Follows() {
       
       const organiserIds = followsSnapshot.docs.map(doc => doc.id);
       
-      // Maksimum 10 ID ile sorgu yapalım (Firestore sınırı)
       let allEvents = [];
       
-      // Her 10 ID için ayrı sorgu yapalım
       for (let i = 0; i < organiserIds.length; i += 10) {
         const batchIds = organiserIds.slice(i, i + 10);
         
         if (batchIds.length === 0) continue;
         
         try {
-          // Tüm organizatörlerin etkinliklerini al
           const eventsRef = collection(db, "events");
           let eventsQuery;
           
-          // Tek ID varsa 'in' kullanma - Firestore sorgu optimizasyonu
           if (batchIds.length === 1) {
             eventsQuery = query(
               eventsRef,
@@ -239,13 +225,10 @@ export default function Follows() {
           eventsSnapshot.forEach((doc) => {
             const event = { id: doc.id, ...doc.data() };
             
-            // Aktif, onaylanmış ve halka açık etkinlikleri filtrele
             if (event.checkedEvent && event.eventTarget === "İctimaiyyətə açıq" && event.deActive === false) {
-              // Etkinlik tarihini kontrol et
               const now = new Date();
               const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
               
-              // Etkinlik türüne göre tarih kontrolü
               if (["Sərgi", "Könüllülük proqramı", "Təcrübə proqramı"].includes(event.eventType)) {
                 const eventEndDate = new Date(event.eventenddate);
                 if (eventEndDate > now) {
@@ -282,7 +265,6 @@ export default function Follows() {
     }
   }, [getCurrentUser]);
   
-  // Filtreleme fonksiyonu
   const applyFilters = useCallback((eventsList) => {
     if (!eventsList || eventsList.length === 0) {
       setFilteredEvents([]);
@@ -293,7 +275,6 @@ export default function Follows() {
 
     let filtered = [...eventsList];
 
-    // Arama filtreleme
     if (search) {
       filtered = filtered.filter(event =>
         event.eventname?.toLowerCase().includes(search.toLowerCase()) ||
@@ -302,7 +283,6 @@ export default function Follows() {
       );
     }
 
-    // Filtreleme yokken rastgele sırala
     const noFiltersActive =
       selectedRegion === "Bütün bölgələr" &&
       selectedEventType === "Bütün növlər" &&
@@ -313,11 +293,8 @@ export default function Follows() {
       search === "";
 
     if (noFiltersActive) {
-      // Basit rastgele sıralama
       filtered = [...eventsList].sort(() => 0.5 - Math.random());
     } else {
-      // Bölge, etkinlik türü, ödeme, belge ve kateqoriya filtreleri
-      // Əsas kateqoriyaların alt kateqoriyaları
       const eylenceSubcategories = ["Konsert", "Teatr", "Festival", "Film", "Oyun gecəsi", "Stand-up", "Musiqi", "Rəqs"];
       const karyeraSubcategories = ["Seminar", "Konfrans", "Workshop", "Networking", "Təlim", "Mentorluq", "İş yarmarkası", "Startap"];
 
@@ -327,7 +304,6 @@ export default function Follows() {
         const matchPayment = selectedPayment === "Hamısı" || event.payment === selectedPayment;
         const matchDocument = selectedDocument === "Hamısı" || event.eventDocument === selectedDocument;
 
-        // Kateqoriya filtresini uygula
         let matchCategory = false;
         const eventCategory = event.eventcategory || event.category;
 
@@ -344,7 +320,6 @@ export default function Follows() {
         return matchRegion && matchEventType && matchPayment && matchDocument && matchCategory;
       });
 
-      // Sıralama
       if (selectedSort) {
         filtered.sort((a, b) => {
           if (selectedSort === "nearToFar" || selectedSort === "farToNear") {
@@ -354,7 +329,7 @@ export default function Follows() {
           } else if (selectedSort === "createdAt") {
             const dateA = new Date(a.createdate || 0);
             const dateB = new Date(b.createdate || 0);
-            return dateB - dateA; // En yeni oluşturulanlar önce
+            return dateB - dateA; 
           }
           return 0;
         });
@@ -367,14 +342,12 @@ export default function Follows() {
     setNoMoreEvents(filtered.length <= eventsPerPage);
   }, [search, selectedRegion, selectedEventType, selectedPayment, selectedDocument, selectedCategory, selectedSort]);
   
-  // Daha fazla etkinlik yükleme
   const loadMoreEvents = useCallback(async () => {
     if (loadingMore || noMoreEvents) return;
     
     try {
       setLoadingMore(true);
       
-      // Kısa bir gecikme ekleyerek loading ikonunun görünmesini sağlayalım
       await new Promise(resolve => setTimeout(resolve, 500));
       
       const nextPage = page + 1;
@@ -390,7 +363,6 @@ export default function Follows() {
       setVisibleEvents(prev => [...prev, ...newEvents]);
       setPage(nextPage);
       
-      // Eğer tüm filtrelenmiş eventler yüklendiyse noMoreEvents'i true yap
       if (startIndex + newEvents.length >= filteredEvents.length) {
         setNoMoreEvents(true);
       }
@@ -402,7 +374,6 @@ export default function Follows() {
     }
   }, [page, filteredEvents, loadingMore, noMoreEvents]);
   
-  // Scroll olayını izleme
   const handleScroll = useCallback(({ nativeEvent }) => {
     const { contentOffset, layoutMeasurement, contentSize } = nativeEvent;
     const paddingToBottom = 200;
@@ -415,24 +386,19 @@ export default function Follows() {
     }
   }, [loadingMore, noMoreEvents, loadMoreEvents]);
   
-  // Takip bırakma işlemi
   const handleUnfollow = async (organiserId) => {
     if (!currentUser || !currentUser.uid) return;
     
     try {
       setUnfollowingId(organiserId);
       
-      // Kullanıcının follows koleksiyonundan organizatörü sil
       await deleteDoc(doc(db, 'users', currentUser.uid, 'follows', organiserId));
       
-      // Organizatörün followers koleksiyonundan kullanıcıyı sil
       await deleteDoc(doc(db, 'users', organiserId, 'followers', currentUser.uid));
       
-      // Yerel state'i güncelle
       setFollowedOrganisers(prev => prev.filter(org => org.id !== organiserId));
       setFollowedOrganisersCount(prev => Math.max(0, prev - 1));
       
-      // Etkinlikleri yeniden getir
       fetchFollowedOrganiserEvents();
       
     } catch (error) {
@@ -444,13 +410,11 @@ export default function Follows() {
     }
   };
   
-  // Arama işlemi
   const handleSearch = (text) => {
     setSearch(text);
     applyFilters(events);
   };
   
-  // Yenileme işlemi
   const onRefresh = async () => {
     setRefreshing(true);
     try {
@@ -465,7 +429,6 @@ export default function Follows() {
     }
   };
   
-  // Event kartına tıklama işlevi
   const handleEventPress = (event) => {
     try {
       router.push({
@@ -478,7 +441,6 @@ export default function Follows() {
     }
   };
   
-  // İlk yükleme
   useEffect(() => {
     const initialize = async () => {
       await Promise.all([
@@ -491,12 +453,10 @@ export default function Follows() {
     initialize();
   }, []);
   
-  // Filtreleri uygulama
   useEffect(() => {
     applyFilters(events);
   }, [events, search, selectedRegion, selectedEventType, selectedPayment, selectedDocument, selectedCategory, selectedSort]);
   
-  // Modal'ı açma fonksiyonu
   const openModal = () => {
     setShowFollowsModal(true);
     Animated.spring(pan, {
@@ -505,7 +465,6 @@ export default function Follows() {
     }).start();
   };
 
-  // Modal'ı kapatma fonksiyonu
   const closeModal = () => {
     setIsClosing(true);
     Animated.timing(pan, {
@@ -525,7 +484,6 @@ export default function Follows() {
       
 
       <View style={{ backgroundColor: isDarkMode ? '#111827' : '#F9FAFB' }}>
-        {/* Arama ve Filtreler */}
         <View className="flex-row px-4 py-2 items-center justify-between">
           <View className="flex-row flex-1 rounded-lg px-3 h-12 mr-2 items-center border" 
                 style={{ 
@@ -565,7 +523,6 @@ export default function Follows() {
 
       </View>
       
-      {/* Başlık - Ortada */}
       <View className="py-2 items-center justify-center" style={{ backgroundColor: isDarkMode ? '#111827' : '#F9FAFB' }}>
         <TouchableOpacity 
           className="flex-row items-center" 
@@ -578,7 +535,6 @@ export default function Follows() {
         </TouchableOpacity>
       </View>
       
-      {/* Etkinlik Listesi */}
       <ScrollView
         ref={scrollViewRef}
         className="flex-1"
@@ -629,7 +585,6 @@ export default function Follows() {
         )}
       </ScrollView>
       
-      {/* İzlenen Teşkilatlar Modal */}
       <Modal
         visible={showFollowsModal && !isClosing}
         transparent={true}

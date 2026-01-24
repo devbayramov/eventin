@@ -51,7 +51,6 @@ export default function RegisterModal({
   const t = translations[language];
   const slideAnim = useRef(new Animated.Value(Dimensions.get('window').width)).current;
 
-  // Eğitim dereceleri için seçenekler
   const degrees = [
     "Ali təhsil",
     "Doktorantura", 
@@ -63,14 +62,12 @@ export default function RegisterModal({
 
   useEffect(() => {
     if (isVisible) {
-      // Görünür olduğunda sağdan sola animasyon başlat
       Animated.timing(slideAnim, {
         toValue: 0,
         duration: 300,
         useNativeDriver: true,
       }).start();
     } else {
-      // Kapanırken soldan sağa animasyon başlat
       Animated.timing(slideAnim, {
         toValue: Dimensions.get('window').width,
         duration: 300,
@@ -89,17 +86,14 @@ export default function RegisterModal({
     });
   };
 
-  // Kullanıcı oturumunu kontrol et ve kullanıcı verilerini getir
   useEffect(() => {
     const checkUserAndGetData = async () => {
       setLoadingUserData(true);
       try {
-        // Önce auth'dan kullanıcıyı kontrol et
         if (auth.currentUser) {
           setCurrentUser(auth.currentUser);
           await fetchUserDataFromFirestore(auth.currentUser.uid);
         } else {
-          // Auth'da yoksa AsyncStorage'dan kontrol et
           const storedUser = await AsyncStorage.getItem('user');
           if (storedUser) {
             const parsedUser = JSON.parse(storedUser);
@@ -117,7 +111,6 @@ export default function RegisterModal({
     checkUserAndGetData();
   }, []);
 
-  // Firestore'dan kullanıcı verisini getir
   const fetchUserDataFromFirestore = async (userId) => {
     try {
       const userDocRef = doc(db, "users", userId);
@@ -152,7 +145,6 @@ export default function RegisterModal({
   };
 
   const handlePhoneChange = (value) => {
-    // Sadece sayılar ve + karakterine izin ver
     const sanitizedValue = value.replace(/[^\d+]/g, '');
     
     if (sanitizedValue.startsWith('+994')) {
@@ -166,7 +158,6 @@ export default function RegisterModal({
   };
 
   const handleFinCodeChange = (value) => {
-    // Boşlukları kaldır ve büyük harfe çevir
     const formattedValue = value.replace(/\s/g, '').toUpperCase();
     if (formattedValue.length <= 7) {
       setFinCode(formattedValue);
@@ -174,16 +165,13 @@ export default function RegisterModal({
   };
 
   const handleAgeChange = (value) => {
-    // Sadece sayılara izin ver ve maksimum 2 karakter
     const numberValue = value.replace(/\D/g, '');
     if (numberValue.length <= 2) {
       setAge(numberValue);
     }
   };
 
-  // Kullanıcı kaydını gerçekleştir
   const handleRegister = async () => {
-    // Form validasyonu
     setError('');
     
     if (!currentUser) {
@@ -243,14 +231,12 @@ export default function RegisterModal({
           registeredAt: serverTimestamp(),
         }
       );
-      // Kullanıcıyı kaydedici
       // const registrationRef = doc(
       //   collection(db, "events", event.id, "registeredUsers")
       // );
       
       // await setDoc(registrationRef, registrationData);
 
-      // // Kullanıcının kayıtlı etkinliklerine ekle
       // await setDoc(
       //   doc(collection(db, "users", userId, "userRegisteredEvents"), event.id),
       //   {
@@ -259,7 +245,6 @@ export default function RegisterModal({
       //   }
       // );
 
-      // Etkinliğin kayıt sayısını güncelle
       // if (!event?.noPlace && event.totalPlace !== 10000) {
       //   await updateDoc(doc(db, "events", event.id), {
       //     currentPlace: increment(-1)
@@ -294,7 +279,6 @@ export default function RegisterModal({
 
   if (!isVisible) return null;
 
-  // Dropdown stilleri 
   const dropdownStyles = {
     dropdownButton: {
       flexDirection: 'row',

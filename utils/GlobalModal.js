@@ -80,19 +80,17 @@ export const GlobalModalProvider = ({ children }) => {
     ]
   };
   
-  // Animasyon değerleri
   const contentAnim = React.useRef(new Animated.Value(0)).current;
   const filterAnim = React.useRef(new Animated.Value(width)).current;
   const opacityAnim = React.useRef(new Animated.Value(0)).current;
 
-  // Android geri tuşu için BackHandler
   useEffect(() => {
     const backAction = () => {
       if (modalVisible) {
         hideModal();
-        return true; // Olayı ele aldığımız için true döndürüyoruz
+        return true; 
       }
-      return false; // Normalde sistem tarafından ele alınmasını istiyoruz
+      return false; 
     };
 
     const backHandler = BackHandler.addEventListener(
@@ -100,25 +98,21 @@ export const GlobalModalProvider = ({ children }) => {
       backAction
     );
 
-    return () => backHandler.remove(); // Component unmount olduğunda dinleyiciyi kaldırıyoruz
+    return () => backHandler.remove(); 
   }, [modalVisible]);
 
-  // Dokunma haraketlerini algılamak için PanResponder
   const panResponder = React.useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => modalVisible,
       onMoveShouldSetPanResponder: (evt, gestureState) => {
-        // Sadece sağa doğru kaydırma hareketinde tepki ver
         return modalVisible && gestureState.dx > 10 && Math.abs(gestureState.dy) < 50;
       },
       onPanResponderMove: (evt, gestureState) => {
-        // Sadece sağa doğru harekette filtreyi sağa kaydır
         if (gestureState.dx > 0) {
           filterAnim.setValue(gestureState.dx);
         }
       },
       onPanResponderRelease: (evt, gestureState) => {
-        // Eğer yeterince sağa kaydırılmışsa modalı kapat
         if (gestureState.dx > width / 3) {
           Animated.parallel([
             Animated.timing(contentAnim, {
@@ -138,12 +132,10 @@ export const GlobalModalProvider = ({ children }) => {
             })
           ]).start();
           
-          // Animasyon süresi kadar bekle, sonra modalı kapat
           setTimeout(() => {
             setModalVisible(false);
           }, 300);
         } else {
-          // Yeterince kaydırılmamışsa geri pozisyona getir
           Animated.parallel([
             Animated.spring(filterAnim, {
               toValue: 0,
@@ -159,7 +151,6 @@ export const GlobalModalProvider = ({ children }) => {
     })
   ).current;
 
-  // Aktif filtre var mı kontrolü
   const hasActiveFilters = selectedRegion !== "Bütün bölgələr" ||
                           selectedSort !== "" ||
                           selectedEventType !== "Bütün növlər" ||
@@ -167,9 +158,7 @@ export const GlobalModalProvider = ({ children }) => {
                           selectedDocument !== "Hamısı" ||
                           selectedCategory !== "Hamısı";
   
-  // Modal gösterme fonksiyonu
   const showModal = () => {
-    // Geçici değerleri mevcut değerlerle eşleştir
     setTempRegion(selectedRegion);
     setTempSort(selectedSort);
     setTempEventType(selectedEventType);
@@ -177,22 +166,18 @@ export const GlobalModalProvider = ({ children }) => {
     setTempDocument(selectedDocument);
     setTempCategory(selectedCategory);
 
-    // Tüm dropdownları kapat
     setShowRegions(false);
     setShowEventTypes(false);
     setShowPayments(false);
     setShowDocuments(false);
     setShowCategories(false);
     
-    // Önce filter position'ı sıfırla, ardından modalVisible'ı true yap
     filterAnim.setValue(width);
     opacityAnim.setValue(0);
     
     setModalVisible(true);
     
-    // Küçük bir gecikme ile animasyonu başlat
     setTimeout(() => {
-      // Ana içeriği sola kaydır, filtre sayfasını sağdan getir
       Animated.parallel([
         Animated.timing(contentAnim, {
           toValue: -width,
@@ -213,9 +198,7 @@ export const GlobalModalProvider = ({ children }) => {
     }, 50);
   };
   
-  // Modal kapatma fonksiyonu
   const hideModal = () => {
-    // Ana içeriği geri getir, filtre sayfasını sağa gönder
     Animated.parallel([
       Animated.timing(contentAnim, {
         toValue: 0,
@@ -234,16 +217,12 @@ export const GlobalModalProvider = ({ children }) => {
       })
     ]).start();
     
-    // Bir sonraki render cycle'da modalı kapat - animasyon devam ederken
-    // Bu sayede pozisyon animasyonu tamamlanana kadar modal görünür kalır
     setTimeout(() => {
       setModalVisible(false);
-    }, 300); // Animasyon süresiyle aynı
+    }, 300); 
   };
 
-  // Filtreleri uygulama fonksiyonu
   const applyFilters = () => {
-    // Geçici değerleri asıl state'lere aktar
     setSelectedRegion(tempRegion);
     setSelectedSort(tempSort);
     setSelectedEventType(tempEventType);
@@ -251,13 +230,10 @@ export const GlobalModalProvider = ({ children }) => {
     setSelectedDocument(tempDocument);
     setSelectedCategory(tempCategory);
 
-    // Modalı kapat
     hideModal();
   };
   
-  // Filtreleri sıfırlama fonksiyonu
   const resetFilters = () => {
-    // Geçici değerleri sıfırla
     setTempRegion("Bütün bölgələr");
     setTempSort("");
     setTempEventType("Bütün növlər");
@@ -266,9 +242,7 @@ export const GlobalModalProvider = ({ children }) => {
     setTempCategory("Hamısı");
   };
 
-  // Tüm filtreleri varsayılan değerlere sıfırlama fonksiyonu
   const resetAllFilters = () => {
-    // Ana filtreleri sıfırla
     setSelectedRegion("Bütün bölgələr");
     setSelectedSort("");
     setSelectedEventType("Bütün növlər");
@@ -276,7 +250,6 @@ export const GlobalModalProvider = ({ children }) => {
     setSelectedDocument("Hamısı");
     setSelectedCategory("Hamısı");
 
-    // Geçici filtreleri de sıfırla
     setTempRegion("Bütün bölgələr");
     setTempSort("");
     setTempEventType("Bütün növlər");
@@ -285,7 +258,6 @@ export const GlobalModalProvider = ({ children }) => {
     setTempCategory("Hamısı");
   };
 
-  // Dile göre bölge listesi
   const regions = [
     "Bütün bölgələr",
     "Bakı",
@@ -359,7 +331,6 @@ export const GlobalModalProvider = ({ children }) => {
     "Zərdab",
   ];
   
-  // Dile göre etkinlik türleri listesi
   const eventTypes = [
     "Bütün növlər",
     "Seminar",
@@ -373,7 +344,6 @@ export const GlobalModalProvider = ({ children }) => {
     "Təcrübə proqramı",
   ];
 
-  // Dile göre ödeme türleri listesi
   const paymentTypes = [
     "Hamısı",
     "Ödənişsiz",
@@ -381,7 +351,6 @@ export const GlobalModalProvider = ({ children }) => {
     "Dövlət dəstəyi ilə"
   ];
 
-  // Dile göre belge türleri listesi
   const documentTypes = [
     "Hamısı",
     "Sertifikat",
@@ -389,7 +358,6 @@ export const GlobalModalProvider = ({ children }) => {
     "Sənədsiz"
   ];
 
-  // Filtrelerin aktif olup olmadığını kontrol et
   const hasActiveTemp = tempRegion !== "Bütün bölgələr" ||
                        tempSort !== "" ||
                        tempEventType !== "Bütün növlər" ||
@@ -397,7 +365,6 @@ export const GlobalModalProvider = ({ children }) => {
                        tempDocument !== "Hamısı" ||
                        tempCategory !== "Hamısı";
 
-  // Toggle dropdown mantığı - eğer aynı dropdown'a basılırsa kapat, farklı ise diğerlerini kapat
   const toggleDropdown = (dropdown) => {
     if (dropdown === 'regions') {
       setShowRegions(!showRegions);
@@ -587,8 +554,6 @@ export const GlobalModalProvider = ({ children }) => {
         >
           {children}
         </Animated.View>
-        
-        {/* Filtre sayfası - Koşullu render yerine her zaman render edip opacity ile gizle/göster */}
         {modalVisible && (
           <Animated.View 
             style={[
@@ -614,7 +579,6 @@ export const GlobalModalProvider = ({ children }) => {
                   <Text style={dynamicStyles.headerTitle}>{t.filters.title}</Text>
                 </View>
                 
-                {/* Sıfırlama butonu */}
                 {hasActiveTemp && (
                   <TouchableOpacity 
                     style={styles.resetButton}
@@ -626,13 +590,11 @@ export const GlobalModalProvider = ({ children }) => {
                 {!hasActiveTemp && <View style={styles.spacer} />}
               </View>
               
-              {/* İçeriği scroll edilebilir yap */}
               <ScrollView 
                 style={styles.filterContent}
                 contentContainerStyle={styles.filterContentContainer}
                 showsVerticalScrollIndicator={true}
               >
-                {/* Tarih filtreleri - 3 buton yan yana */}
                 <View style={dynamicStyles.filterSection}>
                   <Text style={dynamicStyles.sectionTitle}>{t.filters.dateFilter}</Text>
                   <View style={styles.buttonGroup}>
@@ -1034,10 +996,8 @@ export const GlobalModalProvider = ({ children }) => {
   );
 };
 
-// Hook to use the modal context
 export const useGlobalModal = () => useContext(ModalContext);
 
-// Stiller
 const styles = StyleSheet.create({
   container: {
     flex: 1,

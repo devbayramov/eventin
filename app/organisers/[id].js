@@ -49,14 +49,12 @@ export default function OrganiserDetails() {
   const { isDarkMode } = useTheme();
   const { language } = useLanguage();
 
-  // TabView için state
   const [index, setIndex] = useState(0);
   const [routes] = useState([
     { key: 'active', title: translations[language]?.organisers?.activeEvents || 'Aktiv Tədbirlər' },
     { key: 'past', title: translations[language]?.organisers?.pastEvents || 'Uğurlu Tədbirlər' },
   ]);
   
-  // Pagination için state'ler
   const [visibleActiveEvents, setVisibleActiveEvents] = useState([]);
   const [visiblePastEvents, setVisiblePastEvents] = useState([]);
   const [activeEventsPage, setActiveEventsPage] = useState(1);
@@ -64,11 +62,9 @@ export default function OrganiserDetails() {
   const [loadingMore, setLoadingMore] = useState(false);
   const eventsPerPage = 15;
   
-  // FlatList referansları
   const activeEventsListRef = useRef(null);
   const pastEventsListRef = useRef(null);
   
-  // FlatList'ler için son pozisyonu hatırlamak için ref'ler
   const activeScrollY = useRef(0);
   const pastScrollY = useRef(0);
   const isLoadingRef = useRef(false);
@@ -76,7 +72,6 @@ export default function OrganiserDetails() {
 
 
 
-// BackHandler'ı güncelleyin
 useEffect(() => {
   const backAction = () => {
     try {    
@@ -96,7 +91,6 @@ useEffect(() => {
   return () => backHandler.remove();
 }, [router]);
   
-  // EventCard tıklama işlevi
   const handleEventPress = useCallback((event) => {
     router.navigate({
       pathname: generateEventUrl(event),
@@ -104,16 +98,13 @@ useEffect(() => {
     });
   }, [router]);
   
-  // Debug için
   useEffect(() => {
     const checkCurrentUser = async () => {
-      // Kullanıcı kimliğini al
       let user = null;
             
       if (auth.currentUser) {
         user = auth.currentUser;
       } else {
-        // Auth'da kullanıcı yoksa AsyncStorage'ı kontrol et
         try {
           const userJSON = await AsyncStorage.getItem('user');
           if (userJSON) {
@@ -129,7 +120,6 @@ useEffect(() => {
       
       setCurrentUser(user);
       
-      // Eğer kullanıcı girişi yapmışsa, takip durumunu kontrol et
       if (user && id) {
         checkFollowStatus(user.uid, id);
       }
@@ -138,7 +128,6 @@ useEffect(() => {
     checkCurrentUser();
   }, [id]);
 
-  // Takip durumunu kontrol et
   const checkFollowStatus = async (userId, organiserId) => {
     try {
       const followRef = doc(db, 'users', organiserId, 'followers', userId);
@@ -150,7 +139,6 @@ useEffect(() => {
     }
   };
 
-  // TEST VERİSİ - Eğer Firebase bağlantısı sorunluysa
   const testOrganiser = {
     id: id,
     companyName: "Təşkilatçı yoxdur",
@@ -162,7 +150,6 @@ useEffect(() => {
   // Organizatör məlumatlarını getir
   const fetchOrganiser = useCallback(async () => {
     try {
-      // Önce direkt document id ile deneme
       const organiserRef = doc(db, 'users', id);
       const organiserSnap = await getDoc(organiserRef);
       
@@ -170,12 +157,10 @@ useEffect(() => {
         const data = organiserSnap.data();
         setOrganiser({...data, id: id});
         
-        // Takipçi sayısını getir
         const followersRef = collection(db, 'users', id, 'followers');
         const followersSnapshot = await getDocs(followersRef);
         setFollowersCount(followersSnapshot.size);
       } else {
-        // Document ID ile bulunamadıysa, id alanına göre sorgula
         const usersRef = collection(db, 'users');
         const q = query(usersRef, where('id', '==', id));
         const querySnapshot = await getDocs(q);
@@ -185,7 +170,6 @@ useEffect(() => {
           const userId = querySnapshot.docs[0].id;
           setOrganiser({...data, id: userId});
           
-          // Takipçi sayısını getir
           const followersRef = collection(db, 'users', userId, 'followers');
           const followersSnapshot = await getDocs(followersRef);
           setFollowersCount(followersSnapshot.size);
@@ -203,7 +187,6 @@ useEffect(() => {
     }
   }, [id, router, language]);
 
-  // Tədbirləri getir
   const fetchEvents = useCallback(async () => {
     try {
       const eventsRef = collection(db, 'events');
@@ -223,7 +206,6 @@ useEffect(() => {
     }
   }, [id, language]);
 
-  // Tarih karşılaştırma yardımcı fonksiyonu
   const compareDates = useCallback((dateA, dateB) => {
     try {
       const a = new Date(dateA);
@@ -235,7 +217,6 @@ useEffect(() => {
     }
   }, []);
 
-  // Daha fazla etkinlik yükleme fonksiyonu
   const loadMoreEvents = useCallback(async () => {
     if (isLoadingRef.current) return;
     
@@ -243,10 +224,8 @@ useEffect(() => {
       setLoadingMore(true);
       isLoadingRef.current = true;
       
-      // Biraz bekle (loading ikonunu göstermek için)
       await new Promise(resolve => setTimeout(resolve, 300));
       
-      // Scroll pozisyonunu kaydet
       let currentScrollY = index === 0 ? activeScrollY.current : pastScrollY.current;
       
       if (index === 0) { // Aktif tab
@@ -270,7 +249,6 @@ useEffect(() => {
         setVisibleActiveEvents(prev => [...prev, ...newItems]);
         setActiveEventsPage(nextPage);
         
-        // Pozisyonu koru
         if (activeEventsListRef.current) {
           activeEventsListRef.current.scrollTo({ y: currentScrollY, animated: false });
         }
@@ -295,7 +273,6 @@ useEffect(() => {
         setVisiblePastEvents(prev => [...prev, ...newItems]);
         setPastEventsPage(nextPage);
         
-        // Pozisyonu koru
         if (pastEventsListRef.current) {
           pastEventsListRef.current.scrollTo({ y: currentScrollY, animated: false });
         }
@@ -305,7 +282,6 @@ useEffect(() => {
       Alert.alert(translations[language]?.errors?.errorTitle || 'Xəta', 
         translations[language]?.errors?.networkError || 'Daha çox tədbir yüklənərkən xəta yarandı');
     } finally {
-      // Yükleme işlemi tamamlandı
       setTimeout(() => {
         setLoadingMore(false);
         isLoadingRef.current = false;
@@ -313,16 +289,13 @@ useEffect(() => {
     }
   }, [index, activeEvents, pastEvents, visibleActiveEvents.length, visiblePastEvents.length, activeEventsPage, pastEventsPage, eventsPerPage, language]);
 
-  // Scroll olayını izleyen fonksiyon
   const handleScroll = useCallback(({ nativeEvent }) => {
     const { contentOffset, layoutMeasurement, contentSize } = nativeEvent;
     
-    // Scroll pozisyonunu kaydet
     if (index === 0) {
       activeScrollY.current = contentOffset.y;
       
-      // Sayfa sonuna gelince daha fazla yükle
-      const paddingToBottom = 200; // Daha erken başlamak için değeri artırıyoruz
+      const paddingToBottom = 200; 
       const isCloseToBottom = 
         layoutMeasurement.height + contentOffset.y >= 
         contentSize.height - paddingToBottom;
@@ -333,8 +306,7 @@ useEffect(() => {
     } else {
       pastScrollY.current = contentOffset.y;
       
-      // Sayfa sonuna gelince daha fazla yükle
-      const paddingToBottom = 200; // Daha erken başlamak için değeri artırıyoruz
+      const paddingToBottom = 200; 
       const isCloseToBottom = 
         layoutMeasurement.height + contentOffset.y >= 
         contentSize.height - paddingToBottom;
@@ -349,14 +321,13 @@ useEffect(() => {
     if (id) {
       const loadData = async () => {
         await fetchOrganiser();
-        setLoading(true); // Sadece etkinlikler yüklenirken loading durumunu aktif et
+        setLoading(true); 
         const events = await fetchEvents();
         
         const now = new Date();
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         
-        // Aktif etkinlikleri filtrele
         const active = events.filter(event => {
           if (!event.checkedEvent || event.eventTarget !== "İctimaiyyətə açıq") return false;
           
@@ -371,7 +342,6 @@ useEffect(() => {
           return eventEnd >= now;
         });
         
-        // Bitmiş etkinlikleri filtrele
         const finished = events.filter(event => {
           if (!event.checkedEvent || event.eventTarget !== "İctimaiyyətə açıq") return false;
           
@@ -387,14 +357,12 @@ useEffect(() => {
         });
         
         
-        // Aktif etkinlikleri tarihe göre sırala (en yakın tarih ilk önce)
         const sortedActive = active.sort((a, b) => {
           const dateA = new Date(a.eventstartdate);
           const dateB = new Date(b.eventstartdate);
           return dateA - dateB;
         });
         
-        // Bitmiş etkinlikleri tarihe göre sırala (en son biten ilk önce)
         const sortedFinished = finished.sort((a, b) => {
           const dateA = new Date(a.eventenddate);
           const dateB = new Date(b.eventenddate);
@@ -404,7 +372,6 @@ useEffect(() => {
         setActiveEvents(sortedActive);
         setPastEvents(sortedFinished);
         
-        // İlk sayfaları ayarla
         setVisibleActiveEvents(sortedActive.slice(0, eventsPerPage));
         setVisiblePastEvents(sortedFinished.slice(0, eventsPerPage));
         
@@ -415,19 +382,15 @@ useEffect(() => {
     } else {
       console.error("[organiserDetails] ID parametresi eksik");
       setLoading(false);
-      // ID yoksa test verisi kullan
       setOrganiser(testOrganiser);
     }
   }, [fetchOrganiser, fetchEvents, id]);
   
-  // TabView ile sekme değişimi
   useEffect(() => {
-    // Sekme değişiminde yükleme işlemlerini sıfırla
     isLoadingRef.current = false;
     setLoadingMore(false);
   }, [index]);
   
-  // Organizatör bilgisi ve sosyal medya komponenti
   const OrganiserInfoComponent = () => (
     <View style={{padding: 10}}>
       {/* Hakkında bölümü */}
@@ -475,7 +438,6 @@ useEffect(() => {
     </View>
   );
 
-  // Farklı Route Bileşenleri - Tab İçeriği
   const renderActiveRoute = (props) => (
     <ScrollView
       ref={activeEventsListRef}
@@ -568,7 +530,6 @@ useEffect(() => {
     </ScrollView>
   );
   
-  // TabView için scene map ve render scene
   const renderScene = ({ route }) => {
     switch (route.key) {
       case 'active':
@@ -623,7 +584,6 @@ useEffect(() => {
     />
   );
 
-  // Organizatörü paylaş
   const handleShare = async () => {
     try {
       const organiserUrl = `https://eventin.az/organisers/${id}`;
@@ -638,7 +598,6 @@ useEffect(() => {
     }
   };
 
-  // Takip et/bırak
   const handleFollow = async () => {
     if (!currentUser) {
       Alert.alert(
@@ -653,18 +612,14 @@ useEffect(() => {
     }
 
     if (isFollowing) {
-      // Popup menüyü göster
       setShowFollowOptions(true);
     } else {
-      // Takip et
       try {
-        // Organizatörün followers koleksiyonuna kullanıcıyı ekle
         await setDoc(doc(db, 'users', id, 'followers', currentUser.uid), {
           userId: currentUser.uid,
           followedAt: new Date()
         });
         
-        // Kullanıcının follows koleksiyonuna organizatörü ekle
         await setDoc(doc(db, 'users', currentUser.uid, 'follows', id), {
           organiserId: id,
           followedAt: new Date()
@@ -679,15 +634,12 @@ useEffect(() => {
     }
   };
 
-  // Takibi bırak
   const handleUnfollow = async () => {
     if (!currentUser) return;
     
     try {
-      // Organizatörün followers koleksiyonundan kullanıcıyı sil
       await deleteDoc(doc(db, 'users', id, 'followers', currentUser.uid));
       
-      // Kullanıcının follows koleksiyonundan organizatörü sil
       await deleteDoc(doc(db, 'users', currentUser.uid, 'follows', id));
       
       setIsFollowing(false);
@@ -700,13 +652,11 @@ useEffect(() => {
     }
   };
 
-  // Tab değişim fonksiyonu
   const handleTabChange = (newIndex) => {
     setIndex(newIndex);
     setActiveTab(newIndex === 0 ? 'active' : 'past');
   };
 
-  // Back button'a basınca gerçekleşecek işlem
   const handleBackPress = () => {
     router.back();
   };

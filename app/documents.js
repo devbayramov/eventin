@@ -1,4 +1,3 @@
-// app/home.js
 import * as FileSystem from "expo-file-system";
 import React, { useState, useEffect } from "react";
 import {
@@ -48,7 +47,6 @@ export default function Documents() {
        
   const screenWidth = Dimensions.get('window').width;
   
-  // Theme ve dil context'lerini kullan
   const { isDarkMode } = useTheme();
   const { language } = useLanguage();
   
@@ -62,14 +60,11 @@ export default function Documents() {
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [userStorage, setUserStorage] = useState(null);
-  // Detay modalı için state
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [detailDocument, setDetailDocument] = useState(null);
-  // Dropdown state'leri
   const [showEventTypes, setShowEventTypes] = useState(false);
   const [showDocTypes, setShowDocTypes] = useState(false);
   
-  // Etkinlik ve belge türleri
   const eventTypes = ["Seminar", "Konfrans", "Webinar", "Workshop", "Kurs", "Təlim", "Təhsil", "Digər"];
   const documentTypes = ["Diplom", "Sertifikat", "İştirak sənədi", "Sənədsiz"];
 
@@ -87,12 +82,10 @@ export default function Documents() {
   });
   const [selectedFile, setSelectedFile] = useState(null);
 
-  // Tarih seçici için state'ler
   const [datePickerVisible, setDatePickerVisible] = useState(false);
-  const [datePickerMode, setDatePickerMode] = useState('start'); // 'start' veya 'end'
+  const [datePickerMode, setDatePickerMode] = useState('start'); 
 
   useEffect(() => {
-    // AsyncStorage'dan kullanıcı kimliği alma
     const getUserId = async () => {
       if (!userId) {
         try {
@@ -102,11 +95,9 @@ export default function Documents() {
             if (storageUser && storageUser.uid) {
               setUserId(storageUser.uid);
             } else {
-              // Kullanıcı bilgisi yoksa loading false yap
               setLoading(false);
             }
           } else {
-            // AsyncStorage'da kullanıcı yoksa loading false yap
             setLoading(false);
           }
         } catch (err) {
@@ -120,7 +111,6 @@ export default function Documents() {
   }, []);
 
   useEffect(() => {
-    // userId yoksa ve ilk yükleme değilse, loading'i false yap
     if (!userId) {
       return;
     }
@@ -155,14 +145,12 @@ export default function Documents() {
   }, [userId]);
 
   useEffect(() => {
-    // DetailModal'ı kapat - router değiştiğinde
     return () => {
       setDetailModalOpen(false);
       setDetailDocument(null);
     };
   }, [router]);
 
-  // Modal'ın router'dan sonra kapanmasını garanti etmek için bir listener ekle
   useEffect(() => {
     const handleRouterChange = () => {
       if (detailModalOpen) {
@@ -171,11 +159,9 @@ export default function Documents() {
       }
     };
 
-    // Router navigation event listener ekle
     router.addListener && router.addListener('routeChange', handleRouterChange);
     
     return () => {
-      // Cleanup listener
       router.removeListener && router.removeListener('routeChange', handleRouterChange);
     };
   }, [detailModalOpen, router]);
@@ -197,7 +183,6 @@ export default function Documents() {
       return;
     }
     
-    // Kullanıcı kimliğini doğrula
     let currentUserId = userId;
     if (!currentUserId && user) {
       currentUserId = user.uid;
@@ -214,7 +199,6 @@ export default function Documents() {
       console.log("Silinen belge ID:", selectedDoc.id);
       console.log("Kullanıcı ID:", currentUserId);
       
-      // Belgenin referansını al
       const docRef = doc(
         db,
         "users",
@@ -223,19 +207,15 @@ export default function Documents() {
         selectedDoc.id
       );
       
-      // Belgeyi sil
       await deleteDoc(docRef);
       
-      // Belge listesinden kaldır
       setSuccessEvents((prev) =>
         prev.filter((item) => item.id !== selectedDoc.id)
       );
       
-      // Başarı mesajı göster
       Alert.alert(translations[language]?.profile?.successTitle || "Uğurlu", 
                  translations[language]?.documents?.documentDeletedSuccess || "Sənəd uğurla silindi");
       
-      // Modalı kapat
       closeDeleteModal();
     } catch (error) {
       console.error("Sənəd silinərkən xəta:", error);
@@ -252,7 +232,7 @@ export default function Documents() {
 
   const closeAddModal = () => {
     setAddModalOpen(false);
-    setDocError(null); // Error state'i sıfırla
+    setDocError(null); 
     setAddFormData({
       eventContent: "",
       eventOwnerName: "",
@@ -299,7 +279,6 @@ export default function Documents() {
     try {
       setLoading(true);
       
-      // Kullanıcı kimliğini kontrol edelim
       let currentUserId = userId;
       
       if (!currentUserId) {
@@ -345,7 +324,6 @@ export default function Documents() {
         documentUrl = await getDownloadURL(storageRef);
       }
       
-      // Firebase'e gönderilecek veriler
       const docData = {
         ...addFormData,
         userId: currentUserId,
@@ -383,20 +361,17 @@ export default function Documents() {
 
   const handleDownload = async (documentUrl) => {
     try {
-      // Dosya indirme sırasında global loading state'i kullanmayalım, yoksa sayfa yenileniyor
       if (Platform.OS === 'web') {
         window.open(documentUrl);
         return;
       }
       
-      // İzin kontrolü
       const { status } = await MediaLibrary.requestPermissionsAsync();
       if (status !== 'granted') {
         Alert.alert("İcazə verilmədi", "Faylı qaleriyaya endirmək üçün icazə lazımdır");
         return;
       }
       
-      // İndirme başlıyor uyarısı
       Alert.alert("Əməliyyat başladı", "Sənəd endirilir, xahiş edirik gözləyin...");
       
       const decodedFilePath = decodeURIComponent(documentUrl);
@@ -404,36 +379,28 @@ export default function Documents() {
       let fileName = actualFilePath.split("/").pop();
       const cleanFileName = fileName.replace(/[^a-zA-Z0-9.-]/g, "_");
 
-      // eslint-disable-next-line import/namespace
       const localFile = FileSystem.documentDirectory + cleanFileName;
       
-      // İndirme işlemini başlat
       const downloadResumable = FileSystem.createDownloadResumable(
         documentUrl,
         localFile,
         {},
         (downloadProgress) => {
-         // const progress = downloadProgress.totalBytesWritten / downloadProgress.totalBytesExpectedToWrite;
-          // İsteğe bağlı ilerleme gösterimi eklenebilir
+          // download progress izləmə (istəyə bağlı)
         }
       );
       
       const { uri } = await downloadResumable.downloadAsync();
       
-      // PDF ve görüntü dosyalarını farklı şekilde işle
       if (documentUrl.toLowerCase().includes('.pdf')) {
-        // PDF için doğrudan dosyayı aç veya paylaş
         if (await Sharing.isAvailableAsync()) {
           await Sharing.shareAsync(uri);
         } else {
-          // Paylaşım mümkün değilse, dosyayı aç
           Linking.openURL(uri);
         }
       } else {
-        // Görüntü dosyalarını galeriye kaydet
         const asset = await MediaLibrary.createAssetAsync(uri);
         
-        // Galeriye kaydet
         const album = await MediaLibrary.getAlbumAsync('Eventin Sənədləri');
         if (album) {
           await MediaLibrary.addAssetsToAlbumAsync([asset], album, false);
@@ -482,18 +449,15 @@ export default function Documents() {
     return combinedText.includes(searchQuery.toLowerCase());
   });
   
-  // Tarih seçici modunu başlat
   const openDatePicker = (mode) => {
     setDatePickerMode(mode);
     setDatePickerVisible(true);
   };
   
-  // Tarih seçiciyi kapat
   const closeDatePicker = () => {
     setDatePickerVisible(false);
   };
   
-  // Tarih seçildiğinde
   const handleDateChange = (day, month, year) => {
     const newDate = new Date();
     newDate.setDate(day);
@@ -501,18 +465,16 @@ export default function Documents() {
     newDate.setFullYear(year);
     
     if (datePickerMode === 'start') {
-      // Eğer seçilen başlangıç tarihi bitiş tarihinden sonraysa, bitiş tarihini de güncelle
       if (newDate > addFormData.eventEndDate) {
         setAddFormData(prev => ({ 
           ...prev, 
           eventStartDate: newDate,
-          eventEndDate: new Date(newDate.getTime()) // Bitiş tarihini başlangıç tarihiyle aynı yap
+          eventEndDate: new Date(newDate.getTime()) 
         }));
       } else {
         setAddFormData(prev => ({ ...prev, eventStartDate: newDate }));
       }
     } else {
-      // Eğer seçilen bitiş tarihi başlangıç tarihinden önceyse, izin verme
       if (newDate < addFormData.eventStartDate) {
         Alert.alert(
           "Tarix xətası", 
@@ -526,7 +488,6 @@ export default function Documents() {
     closeDatePicker();
   };
   
-  // Tarih Seçici Komponenti
   const DatePicker = () => {
     const currentDate = datePickerMode === 'start' 
       ? addFormData.eventStartDate 
@@ -536,15 +497,12 @@ export default function Documents() {
     const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth());
     const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
     
-    // Gün, ay ve yıl dizileri
     const days = Array.from({length: 31}, (_, i) => i + 1);
     const months = ["Yanvar", "Fevral", "Mart", "Aprel", "May", "İyun", "İyul", "Avqust", "Sentyabr", "Oktyabr", "Noyabr", "Dekabr"];
     const currentYear = new Date().getFullYear();
     const years = Array.from({length: 20}, (_, i) => currentYear - i);
     
-    // Seçimi onayla
     const confirmSelection = () => {
-      // Tarih kontrolü yap
       const selectedDate = new Date();
       selectedDate.setDate(selectedDay);
       selectedDate.setMonth(selectedMonth);
@@ -720,29 +678,23 @@ export default function Documents() {
     );
   };
 
-  // Detay modalını açma
   const openDetailModal = (item) => {
     setDetailDocument(item);
     setDetailModalOpen(true);
   };
 
-  // Detay modalını kapatma
   const closeDetailModal = () => {
     setDetailModalOpen(false);
     setDetailDocument(null);
   };
 
-  // Organizatör URL veya ID işleme
   const handleOrganiserLink = (link) => {
     if (!link) return;
     
-    // Önce modalı kapat
     setDetailModalOpen(false);
     
-    // Kısa bir gecikmeyle router işlemini gerçekleştir
     setTimeout(() => {
       if (link.includes('.')) {
-        // URL olarak kabul et - http:// yoksa ekle
         let url = link;
         if (!url.startsWith('http://') && !url.startsWith('https://')) {
           url = 'https://' + url;
@@ -754,18 +706,15 @@ export default function Documents() {
           Linking.openURL(url);
         }
       } else {
-        // Organizatör ID olarak kabul et
         router.push(`/organisers/${link}`);
       }
-    }, 300); // 300ms gecikme
+    }, 300); 
   };
 
-  // Yeni, modern sertifika kartı renderı
   const renderDocumentItem = ({ item, index }) => (
     <View className="w-[48%] mb-4 rounded-xl overflow-hidden shadow-md border" 
           style={{ backgroundColor: isDarkMode ? '#1f2937' : 'white', borderColor: isDarkMode ? '#374151' : '#e5e7eb' }}>
       <View className="relative">
-        {/* Onay rozeti */}
         {item.documentConfirmed && (
           <View className="absolute top-2 left-2 z-50">
             <Image
@@ -776,7 +725,6 @@ export default function Documents() {
           </View>
         )}
         
-        {/* Sertifika görüntüsü - boyutu küçültüldü */}
         {item.documentUrl && (
           <View>
             {item.documentUrl.toLowerCase().includes(".pdf") ? (
@@ -796,7 +744,6 @@ export default function Documents() {
               </View>
             )}
             
-            {/* Hover kontrolleri */}
             <View className="absolute top-2 right-2 flex-row">
               <TouchableOpacity 
                 className="bg-white/20 p-1 mr-1 rounded-full"
@@ -822,7 +769,6 @@ export default function Documents() {
         )}
       </View>
       
-      {/* Kart içeriği */}
       <View className="p-2">
         <Text className="text-sm text-center font-bold pb-1 border-b" 
               style={{ 
@@ -1004,7 +950,6 @@ export default function Documents() {
           {translations[language]?.documents?.myDocuments || "Sənədlərim"}
         </Text>
         {loading ? (
-          // Loading durumundayken placeholder'ları göster
           <FlatList
             data={[
               { id: 'placeholder1' },

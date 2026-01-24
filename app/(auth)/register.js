@@ -25,21 +25,17 @@ export default function RegisterScreen() {
 
   const handleChange = (field, value) => {
     if (field === "phone") {
-      // Eğer değer boşsa veya +994'ten kısa ise, +994 ekle
       if (!value || value.length < 4) {
         value = "+994";
       }
       
-      // Eğer +994 ile başlamıyorsa, +994 ekle
       if (!value.startsWith("+994")) {
         value = "+994" + value.replace(/[^0-9]/g, "");
       } else {
-        // +994'ten sonraki kısmı al ve sadece rakamları tut
         const numbers = value.slice(4).replace(/[^0-9]/g, "");
         value = "+994" + numbers;
       }
 
-      // Eğer +9940 ile başlıyorsa hata mesajı göster
       if (value.startsWith("+9940")) {
         setErrorMessage("Telefon nömrəsi 0 ilə başlaya bilməz");
       } else {
@@ -50,7 +46,6 @@ export default function RegisterScreen() {
   };
 
   const validateForm = () => {
-    // Ad Soyad kontrolü
     if (!formData.fullName.trim()) {
       setErrorMessage("Ad Soyad daxil edin");
       return false;
@@ -60,7 +55,6 @@ export default function RegisterScreen() {
       return false;
     }
 
-    // Telefon kontrolü
     if (!formData.phone.trim()) {
       setErrorMessage("Telefon nömrəsi daxil edin");
       return false;
@@ -70,7 +64,6 @@ export default function RegisterScreen() {
       return false;
     }
 
-    // Email kontrolü
     if (!formData.email.trim()) {
       setErrorMessage("Email daxil edin");
       return false;
@@ -81,7 +74,6 @@ export default function RegisterScreen() {
       return false;
     }
 
-    // Şifre kontrolü
     if (!formData.password) {
       setErrorMessage("Şifrə daxil edin");
       return false;
@@ -97,13 +89,11 @@ export default function RegisterScreen() {
       return false;
     }
 
-    // Şifre tekrar kontrolü
     if (formData.password !== formData.confirmPassword) {
       setErrorMessage("Şifrələr uyğun gəlmir");
       return false;
     }
 
-    // İstifadəçi qaydaları kontrolü
     if (!formData.acceptTerms) {
       setErrorMessage("İstifadəçi qaydalarını qəbul etməlisiniz");
       return false;
@@ -117,12 +107,10 @@ export default function RegisterScreen() {
       setLoading(true);
       setErrorMessage("");
 
-      // Form validasyonu
       if (!validateForm()) {
         return;
       }
 
-      // Email formatı kontrolü ve düzenleme
       let email = formData.email.trim();
       if (!email.includes('@')) {
         email = email + '@gmail.com';
@@ -131,7 +119,6 @@ export default function RegisterScreen() {
       // OTP gönder
       const otp = await sendOTP(email);
       
-      // OTP sayfasına yönlendir
       router.push({
         pathname: "/otp",
         params: {

@@ -3,17 +3,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const LANGUAGE_KEY = '@language_preference';
 
-// Dil enum sabitleri
 export const LanguageType = {
   AZERBAIJANI: 'az',
   ENGLISH: 'en',
   RUSSIAN: 'ru'
 };
 
-// Varsayılan dil (Azerbaijani)
 const DEFAULT_LANGUAGE = LanguageType.AZERBAIJANI;
 
-// Dil bağlamı (context) oluşturma
 const LanguageContext = createContext({
   language: DEFAULT_LANGUAGE,
   setLanguage: () => {},
@@ -22,13 +19,10 @@ const LanguageContext = createContext({
   isRussian: false
 });
 
-// Dil Provider bileşeni
 export const LanguageProvider = ({ children }) => {
-  // Kullanıcı tercihi
   const [language, setLanguageState] = useState(DEFAULT_LANGUAGE);
   const [isLoading, setIsLoading] = useState(true);
   
-  // Kaydedilmiş dil tercihini al
   useEffect(() => {
     const loadLanguagePreference = async () => {
       try {
@@ -46,13 +40,10 @@ export const LanguageProvider = ({ children }) => {
     loadLanguagePreference();
   }, []);
 
-  // Dil değiştirme fonksiyonu
   const setLanguage = async (newLanguage) => {
     try {
-      // Dili ayarla
       setLanguageState(newLanguage);
       
-      // AsyncStorage'a kaydet
       await AsyncStorage.setItem(LANGUAGE_KEY, newLanguage);
     } catch (error) {
       console.error('Dil tercihi kaydedilirken hata:', error);
@@ -75,13 +66,10 @@ export const LanguageProvider = ({ children }) => {
   );
 };
 
-// Dil bağlamını kullanmak için hook
 export const useLanguage = () => useContext(LanguageContext);
 
-// Çeviri metinlerini içeren nesne
 export const translations = {
   [LanguageType.AZERBAIJANI]: {
-    // Profil sayfası metinleri
     profile: {
       title: 'Profil',
       myEvents: 'Tədbirlərim',
@@ -113,21 +101,18 @@ export const translations = {
       logoutConfirmTitle: 'Hesabdan çıxış',
       logoutConfirmMessage: 'Hesabdan çıxış etmək istədiyinizə əminsiniz?',
     },
-    // Tema seçimi metinleri
     theme: {
       title: 'Tema Seçimi',
       light: 'İşıqlı rejim',
       dark: 'Qaranlıq rejim',
       system: 'Sistem ayarları'
     },
-    // Dil seçimi metinleri
     language: {
       title: 'Dil Seçimi',
       azerbaijani: 'Azərbaycan dili',
       english: 'İngilis dili',
       russian: 'Rus dili'
     },
-    // Bildiriş ayarları
     notifications: {
       title: 'Bildiriş Ayarları',
       allNotifications: 'Bütün bildirişlər',
@@ -141,7 +126,6 @@ export const translations = {
       permissionDenied: 'Bildiriş icazəsi rədd edildi. Ayarlardan aktiv edə bilərsiniz.',
       settingsSaved: 'Bildiriş ayarları yadda saxlanıldı'
     },
-    // Tabs
     tabs: {
       home: "Ana səhifə",
       organisers: "Təşkilatçılar",
@@ -150,7 +134,6 @@ export const translations = {
       profile: "Profil",
       more: "Digər"
     },
-    // Register Modal
     registerModal: {
       title: "Tədbir qeydiyyatı",
       waitingListTitle: "Gözləmə siyahısına qeydiyyat",
@@ -190,7 +173,6 @@ export const translations = {
         registrationError: "Qeydiyyat zamanı xəta baş verdi"
       }
     },
-    // Filtreler
     filters: {
       title: 'Filtrlər',
       reset: 'Sıfırla',
@@ -306,7 +288,6 @@ export const translations = {
       passwordChangeFailed: 'Şifrə dəyişdirilərkən xəta baş verdi',
       logoutFailed: 'Çıxış edərkən xəta baş verdi. Zəhmət olmasa yenidən cəhd edin.',
     },
-    // Organisers sayfası için çeviriler
     organisers: {
       title: 'Təşkilatçılar',
       favorite: 'Favori Təşkilatçılar',
@@ -340,7 +321,6 @@ export const translations = {
       unfollowError: 'İzləmə ləğv edilərkən problem yarandı'
     },
     
-    // Genel metin çevirileri
     general: {
       category: 'Kateqoriya',
       allCategories: 'Bütün sahələr',
@@ -359,14 +339,12 @@ export const translations = {
       addToCalendar: 'Təqvimə əlavə et'
     },
     
-    // Search
     search: {
       searchEvent: 'Tədbir axtar',
       searchOrganisation: 'Təşkilat axtar',
       searchDocument: 'Sənəd axtar'
     },
     
-    // Documents sayfası için çeviriler
     documents: {
       myDocuments: "Sənədlərim",
       documentsOf: "sənədləri",
@@ -401,7 +379,6 @@ export const translations = {
   },
   
   [LanguageType.ENGLISH]: {
-    // Profil sayfası metinleri
     profile: {
       title: 'Profile',
       myEvents: 'My Events',
@@ -433,21 +410,18 @@ export const translations = {
       logoutConfirmTitle: 'Logout',
       logoutConfirmMessage: 'Are you sure you want to logout?',
     },
-    // Tema seçimi metinleri
     theme: {
       title: 'Theme Selection',
       light: 'Light Mode',
       dark: 'Dark Mode',
       system: 'System Settings'
     },
-    // Dil seçimi metinleri
     language: {
       title: 'Language Selection',
       azerbaijani: 'Azerbaijani',
       english: 'English',
       russian: 'Russian'
     },
-    // Notification settings
     notifications: {
       title: 'Notification Settings',
       allNotifications: 'All notifications',
@@ -461,7 +435,6 @@ export const translations = {
       permissionDenied: 'Notification permission denied. You can enable it from settings.',
       settingsSaved: 'Notification settings saved'
     },
-    // Tabs
     tabs: {
       home: "Home",
       organisers: "Organisers",
@@ -470,7 +443,6 @@ export const translations = {
       profile: "Profile",
       more: "More"
     },
-    // Register Modal
     registerModal: {
       title: "Event Registration",
       waitingListTitle: "Waiting List Registration",
@@ -510,7 +482,6 @@ export const translations = {
         registrationError: "An error occurred during registration"
       }
     },
-    // Filtreler
     filters: {
       title: 'Filters',
       reset: 'Reset',
@@ -626,7 +597,6 @@ export const translations = {
       passwordChangeFailed: 'Error changing password',
       logoutFailed: 'Error during logout. Please try again.',
     },
-    // Organisers sayfası için çeviriler
     organisers: {
       title: 'Organizers',
       favorite: 'Favorite Organizers',
@@ -660,7 +630,6 @@ export const translations = {
       unfollowError: 'A problem occurred while unfollowing'
     },
     
-    // Genel metin çevirileri
     general: {
       category: 'Category',
       allCategories: 'All Fields',
@@ -679,14 +648,12 @@ export const translations = {
       addToCalendar: 'Add to calendar'
     },
     
-    // Search
     search: {
       searchEvent: 'Search event',
       searchOrganisation: 'Search organization',
       searchDocument: 'Search document'
     },
     
-    // Documents sayfası için çeviriler
     documents: {
       myDocuments: "My Documents",
       documentsOf: "documents",
@@ -721,7 +688,6 @@ export const translations = {
   },
   
   [LanguageType.RUSSIAN]: {
-    // Profil sayfası metinleri
     profile: {
       title: 'Профиль',
       myEvents: 'Мои мероприятия',
@@ -753,21 +719,18 @@ export const translations = {
       logoutConfirmTitle: 'Выход из аккаунта',
       logoutConfirmMessage: 'Вы уверены, что хотите выйти из аккаунта?',
     },
-    // Tema seçimi metinleri
     theme: {
       title: 'Выбор темы',
       light: 'Светлый режим',
       dark: 'Темный режим',
       system: 'Системные настройки'
     },
-    // Dil seçimi metinleri
     language: {
       title: 'Выбор языка',
       azerbaijani: 'Азербайджанский',
       english: 'Английский',
       russian: 'Русский'
     },
-    // Настройки уведомлений
     notifications: {
       title: 'Настройки уведомлений',
       allNotifications: 'Все уведомления',
@@ -781,7 +744,6 @@ export const translations = {
       permissionDenied: 'Разрешение на уведомления отклонено. Вы можете включить его в настройках.',
       settingsSaved: 'Настройки уведомлений сохранены'
     },
-    // Tabs
     tabs: {
       home: "Главная",
       organisers: "Организаторы",
@@ -790,7 +752,6 @@ export const translations = {
       profile: "Профиль",
       more: "Ещё"
     },
-    // Register Modal
     registerModal: {
       title: "Регистрация на мероприятие",
       waitingListTitle: "Регистрация в лист ожидания",
@@ -830,7 +791,6 @@ export const translations = {
         registrationError: "Произошла ошибка во время регистрации"
       }
     },
-    // Filtрер
     filters: {
       title: 'Фильтры',
       reset: 'Сбросить',
@@ -946,7 +906,6 @@ export const translations = {
       passwordChangeFailed: 'Произошла ошибка при изменении пароля',
       logoutFailed: 'Произошла ошибка при выходе из системы. Пожалуйста, попробуйте еще раз.',
     },
-    // Organisers sayfası için çeviriler
     organisers: {
       title: 'Организаторы',
       favorite: 'Избранные организаторы',
@@ -980,7 +939,6 @@ export const translations = {
       unfollowError: 'Возникла проблема при отписке'
     },
     
-    // Genel metin çevirileri
     general: {
       category: 'Категория',
       allCategories: 'Все области',
@@ -999,14 +957,12 @@ export const translations = {
       addToCalendar: 'Добавить в календарь'
     },
     
-    // Search
     search: {
       searchEvent: 'Поиск мероприятия',
       searchOrganisation: 'Поиск организации',
       searchDocument: 'Поиск документа'
     },
     
-    // Documents sayfası için çeviriler
     documents: {
       myDocuments: "Мои документы",
       documentsOf: "документы",

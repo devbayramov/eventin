@@ -4,32 +4,25 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const THEME_KEY = '@theme_preference';
 
-// Tema için enum sabitleri
 export const ThemeType = {
   LIGHT: 'light',
   DARK: 'dark',
   SYSTEM: 'system'
 };
 
-// Tema bağlamı (context) oluşturma
 const ThemeContext = createContext({
   theme: ThemeType.SYSTEM,
-  currentTheme: 'light', // Gerçek görüntülenen tema (light veya dark)
+  currentTheme: 'light', 
   setTheme: () => {},
   isDarkMode: false
 });
 
-// Theme Provider bileşeni
 export const ThemeProvider = ({ children }) => {
-  // Kullanıcı tercihi
   const [theme, setTheme] = useState(ThemeType.SYSTEM);
-  // Sistem renk şeması
   const colorScheme = useColorScheme();
-  // Efektif tema (görüntülenen)
   const [currentTheme, setCurrentTheme] = useState( colorScheme || 'light');
 
 
-  // Kaydedilmiş tema tercihini al
   useEffect(() => {
     const loadThemePreference = async () => {
       try {
@@ -37,12 +30,10 @@ export const ThemeProvider = ({ children }) => {
         if (savedTheme !== null) {
           setTheme(savedTheme);
         } else {
-          // Eğer kaydedilmiş tema yoksa, sistem temasını kullan
           setTheme(ThemeType.SYSTEM);
         }
       } catch (error) {
         console.error('Tema tercihi yüklenirken hata:', error);
-        // Hata durumunda da sistem teması kullan
         setTheme(ThemeType.SYSTEM);
       }
     };
@@ -50,7 +41,6 @@ export const ThemeProvider = ({ children }) => {
     loadThemePreference();
   }, []);
 
-  // Tema değişikliklerini işle
   useEffect(() => {
     const applyTheme = async () => {
       let effectiveTheme = 'light';
@@ -63,7 +53,6 @@ export const ThemeProvider = ({ children }) => {
 
       setCurrentTheme(effectiveTheme);
 
-      // Tema tercihini kaydet
       try {
         await AsyncStorage.setItem(THEME_KEY, theme);
       } catch (error) {
@@ -73,8 +62,6 @@ export const ThemeProvider = ({ children }) => {
 
     applyTheme();
   }, [theme, colorScheme]);
-
-  // Tema değiştirme fonksiyonu
   const changeTheme = (newTheme) => {
     setTheme(newTheme);
   };
@@ -93,5 +80,4 @@ export const ThemeProvider = ({ children }) => {
   );
 };
 
-// Tema bağlamını kullanmak için hook
 export const useTheme = () => useContext(ThemeContext); 

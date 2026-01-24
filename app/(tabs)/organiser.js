@@ -157,7 +157,6 @@ export default function Organiser() {
       
       const querySnapshot = await getDocs(q);
       
-      // Önce tüm organizatörleri takipçi sayısı olmadan al
       const organisers = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
@@ -205,7 +204,6 @@ export default function Organiser() {
     }
   }, []);
 
-  // Otomatik kaydırma için timer
   useEffect(() => {
     if (popularOrganisers.length > 1) {
       timerRef.current = setInterval(() => {
@@ -214,7 +212,7 @@ export default function Organiser() {
           index: currentIndex.current,
           animated: true
         });
-      }, 3000); // 3 saniyede bir kaydır
+      }, 3000); 
 
       return () => {
         if (timerRef.current) {
@@ -224,13 +222,11 @@ export default function Organiser() {
     }
   }, [popularOrganisers]);
 
-  // İlk yükleme
   useEffect(() => {
     fetchOrganisers();
     fetchPopularOrganisers();
   }, [fetchOrganisers, fetchPopularOrganisers]);
   
-  // Arama ve filtreleme
   useEffect(() => {
     if (!allOrganisers || allOrganisers.length === 0) return;
 
@@ -238,13 +234,10 @@ export default function Organiser() {
     const eylenceSubcategories = ["Konsert", "Teatr", "Festival", "Film", "Oyun gecəsi", "Stand-up", "Musiqi", "Rəqs"];
     const karyeraSubcategories = ["Seminar", "Konfrans", "Workshop", "Networking", "Təlim", "Mentorluq", "İş yarmarkası", "Startap"];
 
-    // Arama ve kategori filtreleme
     const filtered = allOrganisers.filter(organiser => {
-      // İsim araması
       const nameMatch = organiser.companyName &&
         organiser.companyName.toLowerCase().includes(search.toLowerCase());
 
-      // Kategori filtresi
       let categoryMatch = false;
       const organiserSector = organiser.sector;
 
@@ -264,7 +257,6 @@ export default function Organiser() {
     setFilteredOrganisers(filtered);
   }, [allOrganisers, search, selectedCategory]);
   
-  // Yenileme fonksiyonu
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     setSearch("");
@@ -281,24 +273,20 @@ export default function Organiser() {
     }
   }, [fetchOrganisers, fetchPopularOrganisers]);
 
-  // Filter modalını açma
   const openFilterModal = () => {
     setTempCategory(selectedCategory);
     setShowFilterModal(true);
   };
 
-  // Filter uygulama
   const applyFilter = () => {
     setSelectedCategory(tempCategory);
     setShowFilterModal(false);
   };
 
-  // Filter sıfırlama
   const resetFilter = () => {
     setTempCategory("Hamısı");
   };
   
-  // Organizatöre tıklama
   const handleOrganiserPress = (organiser) => {
     if (!organiser?.id) {
       Alert.alert(t.general.error, t.organisers.notFound);

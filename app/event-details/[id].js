@@ -275,7 +275,6 @@ export default function EventDetails() {
     checkUserRegistration(); 
   }, [userInfo, id]);
 
-  // Firebase'den etkinlik verilerini çekme
   useEffect(() => {
     const fetchEventDetails = async () => {
       if (!id) {
@@ -309,7 +308,6 @@ export default function EventDetails() {
     fetchEventDetails();
   }, [id]);
   
-  // İlgili etkinlikleri getirme
   const fetchRelatedEvents = async (event) => {
     if (!event || !event.eventcategory) {
       setRelatedEvents([]);
@@ -345,7 +343,6 @@ export default function EventDetails() {
     }
   };
   
-  // Organizatör bilgilerini getirme
   const fetchOrganizerInfo = async (event) => {
     if (!event || !event.eventOwnerId) {
       setOrganizerInfo({
@@ -374,12 +371,10 @@ export default function EventDetails() {
           sector: organizerData.sector || event.eventOwnerSector || "Kateqoriya"
         });
         
-        // Takipçi sayısını kontrol et
         const followersRef = collection(organizerRef, "followers");
         const followersSnap = await getDocs(followersRef);
         setFollowersCount(followersSnap.size);
         
-        // Kullanıcı kimliğini al
         let userId = null;
         
         if (auth.currentUser) {
@@ -398,7 +393,6 @@ export default function EventDetails() {
           }
         }
         
-        // Mevcut kullanıcının takip edip etmediğini kontrol et
         if (userId) {
           try {
             const currentUserFollowingRef = doc(followersRef, userId);
@@ -436,7 +430,6 @@ export default function EventDetails() {
     }
   };
   
-  // Adresi kopyalama fonksiyonu
   const copyToClipboard = (text) => {
     if (!text) return;
     
@@ -458,7 +451,6 @@ export default function EventDetails() {
     }, 2000);
   };
   
-  // Takvime ekleme fonksiyonu
   const addToCalendar = (type) => {
     if (!event) return;
     
@@ -480,21 +472,17 @@ export default function EventDetails() {
           const [hours, minutes] = event.eventendtime.split(':');
           endDate.setHours(Number(hours), Number(minutes));
         } else {
-          // If no end time specified, set to end of day
           endDate.setHours(23, 59, 59);
         }
       } else {
-        // If no end date provided, set default duration to 1 hour
         endDate.setHours(endDate.getHours() + 1);
       }
       
-      // Handling unsupported calendar apps
       if (!Linking.canOpenURL(`${type}://`)) {
         Alert.alert(t.general.error, t.general.calendarAppMissing || 'Takvim uygulaması bulunamadı');
         return;
       }
       
-      // Other calendar handling code...
       Alert.alert(t.general.success, t.general.eventAddedToCalendar || 'Etkinlik takviminize eklendi');
     } catch (error) {
       console.error('Calendar error:', error);
@@ -502,7 +490,6 @@ export default function EventDetails() {
     }
   };
 
-  // Paylaşma fonksiyonu
   const shareEvent = async () => {
     if (!event) return;
 
@@ -532,12 +519,10 @@ export default function EventDetails() {
     }
   };
   
-  // İlgili etkinliğe yönlendirme
   const handleRelatedEventPress = (selectedEvent) => {
     router.replace(generateEventUrl(selectedEvent));
   };
   
-  // Organizatör sayfasına yönlendirme
   const handleOrganizerPress = () => {
     if (event && event.eventOwnerId) {
       router.push(`/organisers/${event.eventOwnerId}`);
@@ -551,13 +536,11 @@ export default function EventDetails() {
     
     try {
       setIsLoading(true);
-      // Önce auth.currentUser kontrolü
       let userId = null;
       
       if (auth.currentUser) {
         userId = auth.currentUser.uid;
       } else {
-        // Auth'da kullanıcı yoksa AsyncStorage'ı kontrol et
         try {
           const userJSON = await AsyncStorage.getItem('user');
           if (userJSON) {
@@ -571,7 +554,6 @@ export default function EventDetails() {
         }
       }
       
-      // Kullanıcı kimliği yoksa işlem yapma
       if (!userId) {
         setIsLoading(false);
         return;
@@ -586,14 +568,11 @@ export default function EventDetails() {
           setIsLoading(false);
           return;
         } else {
-          // Takip et
-          // Organizatörün followers koleksiyonuna kullanıcıyı ekle
           await setDoc(followerRef, {
             followerId: userId,
             createdAt: new Date()
           });
           
-          // Kullanıcının follows koleksiyonuna organizatörü ekle
           const organiserId = event.eventOwnerId;
           const followDocRef = doc(db, "users", userId, "follows", organiserId);
           await setDoc(followDocRef, {
@@ -623,13 +602,11 @@ export default function EventDetails() {
     try {
       setIsLoading(true);
       
-      // Kullanıcı kimliğini al
       let userId = null;
       
       if (auth.currentUser) {
         userId = auth.currentUser.uid;
       } else {
-        // Auth'da kullanıcı yoksa AsyncStorage'ı kontrol et
         try {
           const userJSON = await AsyncStorage.getItem('user');
           if (userJSON) {
@@ -648,13 +625,10 @@ export default function EventDetails() {
         return;
       }
 
-      // Kullanıcının follows koleksiyonundan organizatörü sil
       await deleteDoc(doc(db, 'users', userId, 'follows', event.eventOwnerId));
       
-      // Organizatörün followers koleksiyonundan kullanıcıyı sil
       await deleteDoc(doc(db, 'users', event.eventOwnerId, 'followers', userId));
       
-      // Yerel state'i güncelle
       setIsFollowing(false);
       setFollowersCount(prevCount => Math.max(0, prevCount - 1));
       
@@ -668,14 +642,12 @@ export default function EventDetails() {
     }
   };
 
-  // Phone linkine tıklama işlemi
   const handlePhoneClick = () => {
     if (event && event.eventregisternumber) {
       Linking.openURL(`tel:${event.eventregisternumber}`);
     }
   };
   
-  // Kayıt başarılı olduğunda
   const handleRegisterSuccess = () => {
     setIsRegistered(true);
     setRegisteredUserCount(prev => prev + 1);
@@ -737,7 +709,6 @@ export default function EventDetails() {
       </View>
       
       <ScrollView className="flex-1" ref={scrollViewRef}>
-        {/* Event Görseli */}
         <View className={`w-full h-[60vw] ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'} mb-4`}>
           <Image 
             source={{ 

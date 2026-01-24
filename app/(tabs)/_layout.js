@@ -13,25 +13,20 @@ export default function Layout() {
   const { language } = useLanguage();
   const t = translations[language];
   
-  // Önceki path'i takip etmek için useRef kullanıyoruz
   const prevPathRef = useRef(pathname);
   
   useEffect(() => {
     const currentPath = pathname;
     const previousPath = prevPathRef.current;
     
-    // Ana sekme adlarını içeren bir dizi oluştur
     const tabNames = ["home", "follows", "organiser",  "profile"];
     
-    // Mevcut ve önceki path'in sekme adlarını çıkart
     const currentTab = currentPath.split('/').pop();
     const previousTab = previousPath.split('/').pop();
 
-    // Eğer hem mevcut hem de önceki path tabs sayfalarına aitse ve farklı tablar arasında geçiş yapıldıysa
     const isCurrentPathTab = tabNames.includes(currentTab);
     const isPreviousPathTab = tabNames.includes(previousTab);
     
-    // Sadece bir sekme sayfasından başka bir sekme sayfasına geçiş yapıldığında filtreleri sıfırla
     if (isCurrentPathTab && isPreviousPathTab && currentTab !== previousTab) {
       resetAllFilters();
     }
@@ -40,7 +35,6 @@ export default function Layout() {
   }, [pathname]);
 
   const getScreenOptions = ({ route }) => {
-    // Tab bar'ın varsayılan stilleri
     const defaultTabBarStyle = {
       position: "absolute",
       bottom: 20,

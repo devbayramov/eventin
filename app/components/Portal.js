@@ -11,7 +11,6 @@ const Portal = ({ children, visible = true }) => {
 
   useEffect(() => {
     if (visible) {
-      // Portal'ı oluştur
       const node = createPortal(
         <View style={[StyleSheet.absoluteFill, styles.container]}>
           {children}
@@ -19,7 +18,6 @@ const Portal = ({ children, visible = true }) => {
       );
       setPortalNode(node);
 
-      // Temizleme
       return () => {
         node.destroy();
       };

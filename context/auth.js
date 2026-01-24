@@ -9,13 +9,10 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Firebase auth state değişikliklerini dinle
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       if (firebaseUser) {
-        // Kullanıcı oturum açmış
         setUser(firebaseUser);
       } else {
-        // Kullanıcı oturum açmamış
         setUser(null);
       }
       setLoading(false);

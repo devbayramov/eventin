@@ -3,9 +3,8 @@ import { View, Text, Image, TouchableOpacity, Dimensions } from 'react-native';
 import { Ionicons } from "@expo/vector-icons";
 
 const { width } = Dimensions.get('window');
-const CARD_WIDTH = (width - 40) / 2; // 2 sütun olarak kartlar için genişlik (kenar boşlukları çıkarıldı)
+const CARD_WIDTH = (width - 40) / 2; 
 
-// Ana Organizatör kartı bileşeni
 export default function OrganiserCard({ item, onPress, isDarkMode, t, followersLoading }) {
   return (
     <TouchableOpacity 
@@ -25,7 +24,6 @@ export default function OrganiserCard({ item, onPress, isDarkMode, t, followersL
         alignItems: 'center',
       }}
     >
-      {/* Organizatör logosu */}
       <View 
         style={{
           width: 70,
@@ -111,7 +109,6 @@ export default function OrganiserCard({ item, onPress, isDarkMode, t, followersL
   );
 }
 
-// Favori Organizatör kartı - Farklı bir tasarımla
 export function FavoriteOrganiserCard({ item, onPress, isDarkMode, t, followersLoading }) {
   return (
     <TouchableOpacity 
@@ -202,7 +199,6 @@ export function FavoriteOrganiserCard({ item, onPress, isDarkMode, t, followersL
   );
 }
 
-// Placeholder Organizatör kartı
 export function PlaceholderOrganiserCard({ isDarkMode }) {
   return (
     <View 
@@ -267,7 +263,6 @@ export function PlaceholderOrganiserCard({ isDarkMode }) {
   );
 }
 
-// Placeholder Favori Organizatör kartı
 export function PlaceholderFavoriteOrganiserCard({ isDarkMode }) {
   return (
     <View 

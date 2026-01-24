@@ -40,14 +40,11 @@ export default function OTPScreen() {
       setLoading(true);
       setErrorMessage("");
 
-      // Firebase'e kullanıcı kaydı
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         params.email,
         params.password
       );
-
-      // Firestore'a kullanıcı bilgilerini kaydet
       await setDoc(doc(db, "users", userCredential.user.uid), {
         email: params.email,
         fullName: params.fullName,
@@ -92,7 +89,7 @@ export default function OTPScreen() {
     try {
       setLoading(true);
       setErrorMessage("");
-      // OTP'yi yeniden gönder
+      // OTP'ni yenidən göndər
       const newOTP = await sendOTP(params.email);
       setTimeLeft(60);
       router.setParams({ otp: newOTP });

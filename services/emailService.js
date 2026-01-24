@@ -5,7 +5,6 @@ const PLUNK_API_URL = 'https://api.useplunk.com/v1/send';
 
 export const sendOTP = async (email, subject = "Eventin OTP kod") => {
   try {
-    // Email formatı kontrolü
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       throw new Error("Yanlış email formatı");
@@ -40,7 +39,7 @@ export const sendOTP = async (email, subject = "Eventin OTP kod") => {
     });
 
     if (response.status !== 200) {
-      throw new Error("Email gönderme başarısız oldu");
+      throw new Error("Email göndərilmədi");
     }
 
     return otp;
@@ -49,13 +48,11 @@ export const sendOTP = async (email, subject = "Eventin OTP kod") => {
     
     if (error.response) {
      
-      throw new Error("Email gönderme servisi şu anda kullanılamıyor");
+      throw new Error("Email göndərərkən server xətası baş verdi");
     } else if (error.request) {
-      // İstek yapıldı ama yanıt alınamadı
-      throw new Error("Sunucuya bağlanılamıyor");
+      throw new Error("Server ilə əlaqə qurulamadı");
     } else {
-      // İstek oluşturulurken hata oluştu
-      throw new Error("Email gönderme işlemi başlatılamadı");
+      throw new Error("Email göndərərkən xəta baş verdi: " + error.message);
     }
   }
 }; 

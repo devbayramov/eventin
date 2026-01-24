@@ -92,7 +92,6 @@ export default function LoginScreen() {
         return;
       }
 
-      // Email formatı kontrolü
       let email = formData.email;
       if (!email.includes('@')) {
         email = email + '@gmail.com';
@@ -109,7 +108,6 @@ export default function LoginScreen() {
       const userCredential = await signInWithEmailAndPassword(auth, email, formData.password);
       
       if (userCredential.user) {
-        // Kullanıcı bilgilerini kontrol et
         const userRef = doc(db, "users", userCredential.user.uid);
         const userSnap = await getDoc(userRef);
         
@@ -123,7 +121,6 @@ export default function LoginScreen() {
           }
         }
 
-        // Başarılı giriş sonrası home sayfasına yönlendir
         router.replace('/(tabs)/home');
       }
     } catch (error) {

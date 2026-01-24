@@ -1,4 +1,3 @@
-// app/home.js
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { collection, getDocs, limit, orderBy, query, where } from "firebase/firestore";
@@ -34,7 +33,6 @@ const { width } = Dimensions.get("window");
 const CARD_WIDTH = width * 0.7; 
 const SPACING = width * 0.05;
 
-// AnimatedDot component - hooks kurallarına uygun şekilde tanımlandı
 const AnimatedDot = ({ index, scrollX }) => {
   const animatedStyle = useAnimatedStyle(() => {
     const inputRange = [
@@ -71,7 +69,6 @@ const AnimatedDot = ({ index, scrollX }) => {
   );
 };
 
-// Filtreleme fonksiyonu
 const isValidEvent = (event) => {
   if (!event) {
     return false;
@@ -83,9 +80,8 @@ const isValidEvent = (event) => {
   }
   
   const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // Bugünün başlangıcı
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()); 
   
-  // Etkinlik tarihlerini alalım
   let startDate = null;
   let endDate = null;
   
@@ -96,7 +92,6 @@ const isValidEvent = (event) => {
     return false;
   }
   
-  // Geçersiz tarih kontrolü
   if (startDate && isNaN(startDate.getTime())) {
     startDate = null;
   }
@@ -104,16 +99,13 @@ const isValidEvent = (event) => {
     endDate = null;
   }
   
-  // Etkinlik türüne göre farklı kontroller yapılacak
   const eventType = event.eventType || "";
  
-  // Sergi, Gönüllülük programı veya Staj programı için bitiş tarihi kontrolü
   if (["Sərgi", "Könüllülük proqramı", "Təcrübə proqramı"].includes(eventType)) {
     if (!endDate || endDate < today) {
       return false;
     }
   } 
-  // Diğer etkinlik türleri için başlangıç tarihi kontrolü
   else {
     if (!startDate || startDate < today) {
       if (startDate && 
@@ -140,7 +132,6 @@ const isValidEvent = (event) => {
 
 
 export default function Home() {
-  // Bütün state'leri en üstte tanımlıyoruz
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [upcomingEventsLoading, setUpcomingEventsLoading] = useState(true);
@@ -153,18 +144,14 @@ export default function Home() {
   const [totalEventCount, setTotalEventCount] = useState(0);
   const [error, setError] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
-  // Aktif filtre durumunu izlemek için yeni state
   const [hasActiveUserFilter, setHasActiveUserFilter] = useState(false);
   
-  // Theme ve Language context'lerini kullan
   const { isDarkMode } = useTheme();
   const { language } = useLanguage();
   const t = translations[language];
   
-  // expo-router'dan router hook'unu burada tanımlıyoruz
   const router = useRouter();
   
-  // GlobalModal hook'unu kullan
   const globalModal = useGlobalModal();
   const {
     selectedRegion,
@@ -181,10 +168,8 @@ export default function Home() {
     hasActiveFilters
   } = globalModal;
   
-  // sortOrder state'ini selectedSort ile senkronize et
   const [sortOrder, setSortOrder] = useState("");
   
-  // Ref'leri state'lerden sonra tanımlıyoruz
   const scrollX = useSharedValue(0);
   const flatListRef = useRef(null);
   const timerRef = useRef(null);
@@ -198,7 +183,6 @@ export default function Home() {
     }
   }, [selectedSort]);
   
-  // Events filtreleme fonksiyonu
   const filterEvents = useCallback((events) => {
     return events.filter((event) => {
       if (!event.checkedEvent || event.eventTarget !== "İctimaiyyətə açıq" || event.deActive !== false) {
@@ -208,7 +192,6 @@ export default function Home() {
       const now = new Date();
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-      // Etkinlik türüne göre tarih kontrolü
       if (["Sərgi", "Könüllülük proqramı", "Təcrübə proqramı"].includes(event.eventType)) {
         const eventEndDate = new Date(event.eventenddate);
         if (eventEndDate <= now) return false;
@@ -228,19 +211,14 @@ export default function Home() {
         if (!validEvent) return false;
       }
 
-      // Arama ve bölge filtreleri
       const matchSearch = event.eventname?.toLowerCase().includes(search.toLowerCase()) ||
                          event.eventtext?.toLowerCase().includes(search.toLowerCase()) ||
                          event.eventRegion?.toLowerCase().includes(search.toLowerCase());
       const matchRegion = selectedRegion === "Bütün bölgələr" || event.eventRegion === selectedRegion;
       const matchEventType = selectedEventType === "Bütün növlər" || event.eventType === selectedEventType;
 
-      // Ödeme ve belge filtrelerini uygula
       const matchPayment = selectedPayment === "Hamısı" || event.payment === selectedPayment;
       const matchDocument = selectedDocument === "Hamısı" || event.eventDocument === selectedDocument;
-
-      // Kateqoriya filtresini uygula
-      // Əsas kateqoriyaların alt kateqoriyaları
       const eylenceSubcategories = ["Konsert", "Teatr", "Festival", "Film", "Oyun gecəsi", "Stand-up", "Musiqi", "Rəqs"];
       const karyeraSubcategories = ["Seminar", "Konfrans", "Workshop", "Networking", "Təlim", "Mentorluq", "İş yarmarkası", "Startap"];
 
@@ -250,13 +228,10 @@ export default function Home() {
       if (selectedCategory === "Hamısı") {
         matchCategory = true;
       } else if (selectedCategory === "Əyləncə") {
-        // Əyləncə seçildikdə, Əyləncə və ya onun alt kateqoriyalarına uyğun olanları göstər
         matchCategory = eventCategory === "Əyləncə" || eylenceSubcategories.includes(eventCategory);
       } else if (selectedCategory === "Karyera") {
-        // Karyera seçildikdə, Karyera və ya onun alt kateqoriyalarına uyğun olanları göstər
         matchCategory = eventCategory === "Karyera" || karyeraSubcategories.includes(eventCategory);
       } else {
-        // Alt kateqoriya seçildikdə
         matchCategory = eventCategory === selectedCategory;
       }
 
@@ -264,9 +239,7 @@ export default function Home() {
     });
   }, [search, selectedRegion, selectedEventType, selectedPayment, selectedDocument, selectedCategory]);
 
-  // Events sıralama fonksiyonu
   const sortEvents = useCallback((events) => {
-    // Filtreleme yokken rastgele sırala
     const noFiltersActive = 
       selectedRegion === "Bütün bölgələr" && 
       selectedEventType === "Bütün növlər" && 
@@ -276,7 +249,6 @@ export default function Home() {
       search === "";
     
     if (noFiltersActive) {
-      // Basit rastgele sıralama
       return [...events].sort(() => 0.5 - Math.random());
     }
     
@@ -290,24 +262,22 @@ export default function Home() {
       } else if (sortOrder === "createdAt") {
         const dateA = new Date(a.createdate || 0);
         const dateB = new Date(b.createdate || 0);
-        return dateB - dateA; // En yeni oluşturulanlar önce
+        return dateB - dateA; 
       }
       return 0;
     });
   }, [sortOrder, selectedRegion, selectedEventType, selectedPayment, selectedDocument, search]);
   
   
-  // Yaklaşan etkinlikleri getirme fonksiyonu
   const fetchUpcomingEvents = useCallback(async () => {
     try {
       setUpcomingEventsLoading(true);
       setError(null);
       
-      // Tüm aktif etkinlikleri çek
       const eventsQuery = query(
         collection(db, "events"),
         where("deActive", "==", false),
-        limit(100) // Daha fazla veri çekip client-side filtreleme yapacağız
+        limit(100) 
       );
       
       const querySnapshot = await getDocs(eventsQuery);
@@ -325,7 +295,6 @@ export default function Home() {
           if (isValidEvent(event)) {
             const eventDate = new Date(event.eventstartdate);
             
-            // Bugünden sonra ve bir hafta içinde olan etkinlikleri ekle
             if (eventDate >= currentDate && eventDate <= oneWeekLater) {
               events.push(event);
             }
@@ -335,7 +304,6 @@ export default function Home() {
         }
       });
       
-      // Tarihe göre sırala (en yakın tarihten en uzak tarihe)
       events.sort((a, b) => {
         const dateA = new Date(a.eventstartdate);
         const dateB = new Date(b.eventstartdate);
@@ -354,18 +322,14 @@ export default function Home() {
     }
   }, []);
   
-  // Tüm etkinlikleri getirme fonksiyonu
   const fetchEvents = useCallback(async () => {
     try {
-      // Yükleme işlemi başladığında UI'da placeholder'lar gösterilecek
       setLoading(true);
       setError(null);
       setNoMoreEvents(false);
       setLastDoc(null);
-      // Mevcut etkinlikleri temizle ki placeholder'lar görünsün
       setFilteredEvents([]);
 
-      // Firebase'den veri çekme
       const eventsQuery = query(
         collection(db, "events"),
         orderBy("eventstartdate")
@@ -373,76 +337,59 @@ export default function Home() {
 
       const querySnapshot = await getDocs(eventsQuery);
 
-      // Veriler çekildikten sonraki işlemler
       const events = [];
       querySnapshot.forEach((doc) => {
         const event = { id: doc.id, ...doc.data() };
         events.push(event);
       });
 
-      // Tüm etkinlikleri sakla
       setAllEvents(events);
       
-      // Etkinliklerin işlenmesi için küçük bir gecikme ekleyerek placeholder'ların görünmesini sağla
       await new Promise(resolve => setTimeout(resolve, 300));
       
-      // Filtreleme ve sıralama işlemleri
       const filteredEventsList = filterEvents(events);
       let sortedEventsList = sortEvents(filteredEventsList);
       
-      // Sıralanmış/filtrelenmiş verileri her zaman rastgele karıştır
       const shuffledEvents = [...sortedEventsList].sort(() => 0.5 - Math.random());
       
-      // İlk 20 eventi göster
       setFilteredEvents(shuffledEvents.slice(0, 20));
       
-      // Toplam filtrelenmiş etkinlik sayısını ayarla
       setTotalEventCount(filteredEventsList.length);
       
-      // Eğer toplam event sayısı 20'den fazlaysa, daha fazla event var demektir
       setNoMoreEvents(filteredEventsList.length <= 20);
 
     } catch (error) {
       console.error("❌ Tədbirlər xəta:", error.message);
       setError("Etkinlikler yüklenirken bir sorun oluştu.");
     } finally {
-      // Tüm işlemler bittikten sonra loading durumunu kaldır
       setLoading(false);
     }
   }, [filterEvents, sortEvents]);
   
-  // Daha fazla etkinlik yükleme
   const loadMoreEvents = useCallback(async () => {
     if (loadingMore || noMoreEvents || search.trim() !== "") return;
     
     try {
       setLoadingMore(true);
       
-      // Kısa bir gecikme ekleyerek loading ikonunun görünmesini sağlayalım
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      // Mevcut filteredEvents uzunluğunu al
       const currentLength = filteredEvents.length;
       
-      // Önce bütün eventleri filtrele ve sırala
       const filteredEventsList = filterEvents(allEvents);
       const sortedEventsList = sortEvents(filteredEventsList);
       
-      // Filtreden sonra yeterli event kalmadıysa
       if (currentLength >= filteredEventsList.length) {
         setNoMoreEvents(true);
         return;
       }
       
-      // Sıralanmış eventlerden henüz gösterilmemiş olanları
       const remainingEvents = sortedEventsList.filter(
         event => !filteredEvents.some(fe => fe.id === event.id)
       );
       
-      // Kalan eventleri karıştır
       const shuffledRemainingEvents = [...remainingEvents].sort(() => 0.5 - Math.random());
       
-      // Karıştırılmış eventlerden ilk 20'sini al
       const nextEvents = shuffledRemainingEvents.slice(0, 20);
       
       if (nextEvents.length === 0) {
@@ -450,10 +397,8 @@ export default function Home() {
         return;
       }
       
-      // Yeni eventleri ekle
       setFilteredEvents(prev => [...prev, ...nextEvents]);
       
-      // Eğer tüm filtrelenmiş eventler yüklendiyse noMoreEvents'i true yap
       if (currentLength + nextEvents.length >= filteredEventsList.length) {
         setNoMoreEvents(true);
       }
@@ -471,31 +416,25 @@ export default function Home() {
     },
   });
 
-  // Scroll olayını izleyen fonksiyon
   const handleMainScroll = useCallback(({ nativeEvent }) => {
     const { layoutMeasurement, contentOffset, contentSize } = nativeEvent;
     
-    // Scroll pozisyonunu hesapla
-    const paddingToBottom = 200; // Alt kısımda daha fazla boşluk bırak
+    const paddingToBottom = 200; 
     const isCloseToBottom = 
       layoutMeasurement.height + contentOffset.y >= 
       contentSize.height - paddingToBottom;
     
-    // Eğer sayfa sonuna yaklaşıldıysa ve yükleme yapılmıyorsa
     if (isCloseToBottom && !loadingMore && !noMoreEvents) {
       loadMoreEvents();
     }
   }, [loadingMore, noMoreEvents, loadMoreEvents]);
 
   
-  // Yenileme fonksiyonu
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    setSearch(""); // Aramayı sıfırla
-    setNoMoreEvents(false); // Event yüklemeyi yeniden etkinleştir
+    setSearch(""); 
+    setNoMoreEvents(false); 
     try {
-      // Eğer filtreleme işlemi yoksa, her iki veri tipini de getir
-      // Aksi halde sadece ana etkinlikleri getir
       if (!hasActiveUserFilter) {
         await Promise.all([
           fetchUpcomingEvents(),
@@ -511,7 +450,6 @@ export default function Home() {
     }
   }, [fetchUpcomingEvents, fetchEvents, hasActiveUserFilter]);
   
-  // Filtreleme state'ini güncelleyen fonksiyon
   const updateFilterState = useCallback(() => {
     const isFiltered =
       search.trim() !== "" ||
@@ -522,61 +460,46 @@ export default function Home() {
       selectedCategory !== "Hamısı" ||
       sortOrder !== "";
 
-    // Filtre durumu değişirse:
     if (isFiltered !== hasActiveUserFilter) {
-      // Filtre kaldırıldığında ve yakın etkinlikler gösterilecekse
       if (!isFiltered && hasActiveUserFilter) {
-        // Önce placeholder göster, sonra yakın etkinlikleri getir
         setUpcomingEventsLoading(true);
         setUpcomingEvents([]);
         fetchUpcomingEvents();
       }
 
-      // State'i güncelle
       setHasActiveUserFilter(isFiltered);
     }
   }, [search, selectedRegion, selectedEventType, selectedPayment, selectedDocument, selectedCategory, sortOrder, hasActiveUserFilter, fetchUpcomingEvents]);
   
-  // Arama işlemi
   const handleSearch = useCallback((text) => {
     setSearch(text);
-    // Arama işleminde sadece state'i güncelle, filtreleme useEffect içinde zaten yapılacak
   }, []);
   
-  // Filtreleri uygulama ve etkinlikleri yeniden getirme
   useEffect(() => {
     if (allEvents.length > 0) {
-      // Filtreleme işlemi başlarken loading'i aktif yap
       setLoading(true);
       
-      // Filtrelenmiş etkinlikleri temizle ki, placeholder gösterilsin
       setFilteredEvents([]);
       
-      // Etkinliklerin yeniden işlenmesi için küçük bir gecikme ekle
       setTimeout(() => {
         try {
-          // Filtreleme ve sıralama işlemleri
           const filteredEventsList = filterEvents(allEvents);
           const sortedEventsList = sortEvents(filteredEventsList);
           
-          // Sıralanmış verileri her zaman karıştır
           const shuffledEvents = [...sortedEventsList].sort(() => 0.5 - Math.random());
           
-          // Filtrelenmiş etkinlikleri güncelle
           setFilteredEvents(shuffledEvents.slice(0, 20));
           setTotalEventCount(filteredEventsList.length);
           setNoMoreEvents(filteredEventsList.length <= 20);
         } catch (error) {
           console.error("Filtreleme hatası:", error);
         } finally {
-          // İşlemler bittikten sonra loading durumunu kaldır
           setLoading(false);
         }
-      }, 300); // Filtre uygulanırken placeholderlar görünebilsin
+      }, 300); 
     }
   }, [selectedRegion, selectedEventType, selectedPayment, selectedDocument, selectedCategory, sortOrder, search, allEvents, filterEvents, sortEvents]);
   
-  // Veri yüklenmemişse fetchEvents çağır
   useEffect(() => {
     if (allEvents.length > 0) {
       return;
@@ -585,21 +508,16 @@ export default function Home() {
     fetchEvents();
   }, [allEvents.length, fetchEvents]);
 
-  // İlk yükleme
   useEffect(() => {
-    // İlk yüklemede bütün verileri sırayla getir
     const loadInitialData = async () => {
       try {
-        // Önce ana etkinlikleri getir
         if (allEvents.length === 0) {
           await fetchEvents();
         }
 
-        // Eğer filtre yoksa, ana veriler geldikten sonra yakın etkinlikleri getir
         if (!hasActiveUserFilter) {
           fetchUpcomingEvents();
         } else {
-          // Filtre varsa yakın etkinlikleri temizle
           setUpcomingEvents([]);
         }
       } catch (error) {
@@ -616,17 +534,14 @@ export default function Home() {
     };
   }, [fetchUpcomingEvents, fetchEvents, hasActiveUserFilter, allEvents.length]);
   
-  // Filtrelerin değişimini izle ve filtreleme durumunu güncelle
   useEffect(() => {
     updateFilterState();
   }, [updateFilterState]);
   
-  // GlobalModal'dan filtrelerin değişimini de izle
   useEffect(() => {
     updateFilterState();
   }, [selectedRegion, selectedEventType, selectedPayment, selectedDocument, sortOrder, updateFilterState]);
   
-  // Auto scroll için ayrı useEffect
   useEffect(() => {
     if (upcomingEvents.length === 0) return;
     
@@ -652,7 +567,6 @@ export default function Home() {
     };
   }, [upcomingEvents]);
   
-  // Event kartına tıklama işlevi
   const handleEventPress = (event) => {
     try {
       router.push({
@@ -665,7 +579,6 @@ export default function Home() {
     }
   };
 
-  // Upcoming events slider render
   const renderUpcomingEvents = () => {
     if (upcomingEventsLoading) {
       return (
@@ -734,7 +647,7 @@ export default function Home() {
             <View style={{ 
               width: CARD_WIDTH, 
               marginRight: SPACING,
-              zIndex: index === Math.floor(scrollX.value / (CARD_WIDTH + SPACING)) ? 1 : 0, // Aktif kartı öne getir
+              zIndex: index === Math.floor(scrollX.value / (CARD_WIDTH + SPACING)) ? 1 : 0, 
             }}>
               <UpcomingEventCard 
                 item={item} 
@@ -757,10 +670,8 @@ export default function Home() {
     );
   };
 
-  // Tüm etkinlikler render
   const renderAllEvents = () => {
     if (loading) {
-      // İlk yüklemede veya filtreleme yapılırken placeholder'ları göster (filtre varsa filteredEvents boşaltılmış olabilir)
       return (
         <View className="px-4">
           {[...Array(4)].map((_, index) => (

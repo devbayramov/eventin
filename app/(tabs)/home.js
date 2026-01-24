@@ -25,6 +25,7 @@ import Animated, {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { translations, useLanguage } from '../../context/language';
 import { useTheme } from '../../context/theme';
+import { useNotifications } from '../../context/notifications';
 import { db } from "../../firebaseConfig";
 import { generateEventUrl } from "../../utils/GenerateUrl";
 import { useGlobalModal } from "../../utils/GlobalModal";
@@ -149,6 +150,9 @@ export default function Home() {
   const { isDarkMode } = useTheme();
   const { language } = useLanguage();
   const t = translations[language];
+
+  // Notifications context
+  const { unreadCount } = useNotifications();
   
   const router = useRouter();
   
@@ -746,8 +750,18 @@ export default function Home() {
               color={hasActiveFilters ? "#FFFFFF" : isDarkMode ? "#818CF8" : "#4F46E5"} 
             />
           </TouchableOpacity>
-          <TouchableOpacity className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} p-3 h-12 rounded-lg border`}>
+          <TouchableOpacity
+            onPress={() => router.push('/notifications')}
+            className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} p-3 h-12 rounded-lg border relative`}
+          >
             <Ionicons name="notifications-outline" size={20} color={isDarkMode ? "#818CF8" : "#4F46E5"} />
+            {unreadCount > 0 && (
+              <View className="absolute -top-1 -right-1 bg-red-500 rounded-full min-w-[18px] h-[18px] items-center justify-center">
+                <Text className="text-white text-xs font-bold">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </Text>
+              </View>
+            )}
           </TouchableOpacity>
         </View>
       </View>

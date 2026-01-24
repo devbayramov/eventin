@@ -11,7 +11,7 @@ export default ({ config }) => ({
     newArchEnabled: true,
     notification: {
       icon: "./assets/splash-icon.png",
-      color: "#6366f1",
+      color: "#ff914d",
     },
 
     ios: {
@@ -42,11 +42,11 @@ export default ({ config }) => ({
         "expo-splash-screen",
         {
           image: "./assets/splash-icon.png",
-          imageWidth: 200,
+          imageWidth: 100,
           resizeMode: "contain",
-          backgroundColor: "#9654cf",
+          backgroundColor: "#ff914d",
           dark: {
-            backgroundColor: "#9654cf",
+            backgroundColor: "#ff914d",
           },
         },
       ],
@@ -66,15 +66,15 @@ export default ({ config }) => ({
     },
 
     extra: {
-      firebaseApiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
-      firebaseAuthDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
-      firebaseProjectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
-      firebaseStorageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
-      firebaseMessagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-      firebaseAppId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
-      googleWebClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-      googleIosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
-      googleAndroidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
+      firebaseApiKey: process.env.FIREBASE_API_KEY || process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
+      firebaseAuthDomain: process.env.FIREBASE_AUTH_DOMAIN || process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
+      firebaseProjectId: process.env.FIREBASE_PROJECT_ID || process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
+      firebaseStorageBucket: process.env.FIREBASE_STORAGE_BUCKET || process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
+      firebaseMessagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID || process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+      firebaseAppId: process.env.FIREBASE_APP_ID || process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
+      googleWebClientId: process.env.GOOGLE_WEB_CLIENT_ID || process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+      googleIosClientId: process.env.GOOGLE_IOS_CLIENT_ID || process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+      googleAndroidClientId: process.env.GOOGLE_ANDROID_CLIENT_ID || process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
       eas: {
         projectId: "41b04da9-7852-4895-9150-5a64b8345080",
       },

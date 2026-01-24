@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
+import * as TaskManager from 'expo-task-manager';
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 import { doc, updateDoc, setDoc, getDoc } from 'firebase/firestore';
@@ -9,6 +10,48 @@ import { db, auth } from '../firebaseConfig';
 
 const NOTIFICATION_SETTINGS_KEY = '@notification_settings';
 const PUSH_TOKEN_KEY = '@push_token';
+const NOTIFICATIONS_LIST_KEY = '@notifications_list';
+const BACKGROUND_NOTIFICATION_TASK = 'BACKGROUND_NOTIFICATION_TASK';
+
+// Background task - app bağlı ikən gələn bildirişləri saxla
+TaskManager.defineTask(BACKGROUND_NOTIFICATION_TASK, async ({ data, error }) => {
+  if (error) {
+    console.error('Background notification error:', error);
+    return;
+  }
+
+  if (data) {
+    const notification = data.notification;
+    if (notification) {
+      try {
+        // Mövcud bildirişləri al
+        const savedNotifications = await AsyncStorage.getItem(NOTIFICATIONS_LIST_KEY);
+        let currentNotifications = savedNotifications ? JSON.parse(savedNotifications) : [];
+
+        const notificationId = notification.request?.identifier || Date.now().toString();
+
+        // Dublikat yoxla
+        const alreadyExists = currentNotifications.some(n => n.id === notificationId);
+        if (!alreadyExists) {
+          const newNotification = {
+            id: notificationId,
+            title: notification.request?.content?.title || 'Bildiriş',
+            body: notification.request?.content?.body || '',
+            data: notification.request?.content?.data || {},
+            receivedAt: new Date().toISOString(),
+            read: false,
+          };
+
+          currentNotifications = [newNotification, ...currentNotifications];
+          await AsyncStorage.setItem(NOTIFICATIONS_LIST_KEY, JSON.stringify(currentNotifications));
+          console.log('Background notification saved:', newNotification.title);
+        }
+      } catch (e) {
+        console.error('Error saving background notification:', e);
+      }
+    }
+  }
+});
 
 // Push token-i Firestore-a saxla
 export const savePushTokenToFirestore = async (token) => {
@@ -66,6 +109,13 @@ const NotificationsContext = createContext({
   expoPushToken: null,
   notification: null,
   registerForPushNotifications: () => {},
+  // Bildiriş siyahısı üçün yeni funksiyalar
+  notificationsList: [],
+  unreadCount: 0,
+  markAsRead: () => {},
+  markAllAsRead: () => {},
+  clearAllNotifications: () => {},
+  addNotification: () => {},
 });
 
 // Register for push notifications
@@ -120,9 +170,13 @@ export const NotificationsProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [expoPushToken, setExpoPushToken] = useState(null);
   const [notification, setNotification] = useState(null);
+  const [notificationsList, setNotificationsList] = useState([]);
 
   const notificationListener = useRef();
   const responseListener = useRef();
+
+  // Oxunmamış bildiriş sayı
+  const unreadCount = notificationsList.filter(n => !n.read).length;
 
   // Load saved settings and register for push notifications on mount
   useEffect(() => {
@@ -140,6 +194,37 @@ export const NotificationsProvider = ({ children }) => {
           setExpoPushToken(savedToken);
         }
 
+        // Load saved notifications list
+        const savedNotifications = await AsyncStorage.getItem(NOTIFICATIONS_LIST_KEY);
+        let currentNotifications = [];
+        if (savedNotifications) {
+          currentNotifications = JSON.parse(savedNotifications);
+          setNotificationsList(currentNotifications);
+        }
+
+        // App bağlı ikən gələn bildirişi yoxla
+        const lastResponse = await Notifications.getLastNotificationResponseAsync();
+        if (lastResponse) {
+          const notification = lastResponse.notification;
+          const notificationId = notification.request.identifier;
+
+          // Bu bildiriş artıq siyahıda yoxdursa əlavə et
+          const alreadyExists = currentNotifications.some(n => n.id === notificationId);
+          if (!alreadyExists) {
+            const newNotification = {
+              id: notificationId,
+              title: notification.request.content.title,
+              body: notification.request.content.body,
+              data: notification.request.content.data,
+              receivedAt: new Date().toISOString(),
+              read: false,
+            };
+            const updated = [newNotification, ...currentNotifications];
+            setNotificationsList(updated);
+            await AsyncStorage.setItem(NOTIFICATIONS_LIST_KEY, JSON.stringify(updated));
+          }
+        }
+
         // Register for push notifications
         const token = await registerForPushNotificationsAsync();
         if (token) {
@@ -148,6 +233,9 @@ export const NotificationsProvider = ({ children }) => {
           // Save to Firestore
           await savePushTokenToFirestore(token);
         }
+
+        // Background notification task-ı register et
+        await Notifications.registerTaskAsync(BACKGROUND_NOTIFICATION_TASK);
       } catch (error) {
         console.error('Error initializing notifications:', error);
       } finally {
@@ -160,21 +248,55 @@ export const NotificationsProvider = ({ children }) => {
     // Listen for incoming notifications
     notificationListener.current = Notifications.addNotificationReceivedListener((notification) => {
       setNotification(notification);
+      // Bildirişi siyahıya əlavə et
+      const newNotification = {
+        id: notification.request.identifier || Date.now().toString(),
+        title: notification.request.content.title,
+        body: notification.request.content.body,
+        data: notification.request.content.data,
+        receivedAt: new Date().toISOString(),
+        read: false,
+      };
+      setNotificationsList(prev => {
+        const updated = [newNotification, ...prev];
+        AsyncStorage.setItem(NOTIFICATIONS_LIST_KEY, JSON.stringify(updated));
+        return updated;
+      });
     });
 
-    // Listen for notification interactions
+    // Listen for notification interactions (istifadəçi bildirişə basanda)
     responseListener.current = Notifications.addNotificationResponseReceivedListener((response) => {
-      const data = response.notification.request.content.data;
-      // Handle notification tap - navigate to relevant screen
+      const notification = response.notification;
+      const notificationId = notification.request.identifier;
+      const data = notification.request.content.data;
+
+      // Bildirişi siyahıya əlavə et (əgər yoxdursa)
+      setNotificationsList(prev => {
+        const alreadyExists = prev.some(n => n.id === notificationId);
+        if (alreadyExists) return prev;
+
+        const newNotification = {
+          id: notificationId,
+          title: notification.request.content.title,
+          body: notification.request.content.body,
+          data: data,
+          receivedAt: new Date().toISOString(),
+          read: false,
+        };
+        const updated = [newNotification, ...prev];
+        AsyncStorage.setItem(NOTIFICATIONS_LIST_KEY, JSON.stringify(updated));
+        return updated;
+      });
+
       console.log('Notification tapped:', data);
     });
 
     return () => {
       if (notificationListener.current) {
-        Notifications.removeNotificationSubscription(notificationListener.current);
+        notificationListener.current.remove();
       }
       if (responseListener.current) {
-        Notifications.removeNotificationSubscription(responseListener.current);
+        responseListener.current.remove();
       }
     };
   }, []);
@@ -238,6 +360,49 @@ export const NotificationsProvider = ({ children }) => {
     return token;
   };
 
+  // Bildirişi oxunmuş kimi işarələ
+  const markAsRead = async (notificationId) => {
+    setNotificationsList(prev => {
+      const updated = prev.map(n =>
+        n.id === notificationId ? { ...n, read: true } : n
+      );
+      AsyncStorage.setItem(NOTIFICATIONS_LIST_KEY, JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  // Bütün bildirişləri oxunmuş kimi işarələ
+  const markAllAsRead = async () => {
+    setNotificationsList(prev => {
+      const updated = prev.map(n => ({ ...n, read: true }));
+      AsyncStorage.setItem(NOTIFICATIONS_LIST_KEY, JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  // Bütün bildirişləri sil
+  const clearAllNotifications = async () => {
+    setNotificationsList([]);
+    await AsyncStorage.removeItem(NOTIFICATIONS_LIST_KEY);
+  };
+
+  // Manuel bildiriş əlavə et (test üçün və ya local notifications üçün)
+  const addNotification = async (title, body, data = {}) => {
+    const newNotification = {
+      id: Date.now().toString(),
+      title,
+      body,
+      data,
+      receivedAt: new Date().toISOString(),
+      read: false,
+    };
+    setNotificationsList(prev => {
+      const updated = [newNotification, ...prev];
+      AsyncStorage.setItem(NOTIFICATIONS_LIST_KEY, JSON.stringify(updated));
+      return updated;
+    });
+  };
+
   return (
     <NotificationsContext.Provider
       value={{
@@ -248,6 +413,13 @@ export const NotificationsProvider = ({ children }) => {
         expoPushToken,
         notification,
         registerForPushNotifications,
+        // Bildiriş siyahısı üçün yeni funksiyalar
+        notificationsList,
+        unreadCount,
+        markAsRead,
+        markAllAsRead,
+        clearAllNotifications,
+        addNotification,
       }}
     >
       {children}

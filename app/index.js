@@ -79,12 +79,12 @@ export default function WelcomeScreen() {
         backgroundColor="transparent" 
         translucent={true} 
       />
-      {/* Logo */}
-      <Image
-        source={require('../assets/splash.png')}
-        className="w-60 h-12 mt-8" 
+
+      {/* <Image
+        source={require('../assets/splash-icon.png')}
+        className="w-42 h-24 mt-8" 
         resizeMode="contain"
-      />
+      /> */}
 
       {/* Slider */}
       <View style={{ height: screenWidth }} className="mb-4">

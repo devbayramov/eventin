@@ -1,11 +1,14 @@
+import { BottomSheetBackdrop, BottomSheetModal, BottomSheetScrollView, BottomSheetView } from "@gorhom/bottom-sheet";
 import { FontAwesome, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from "expo-router";
 import { EmailAuthProvider, reauthenticateWithCredential, signOut, updatePassword } from "firebase/auth";
 import { collection, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
-import { useEffect, useState } from "react";
-import { ActivityIndicator, Alert, Image, Linking, Modal, ScrollView, StatusBar, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ActivityIndicator, Alert, Image, Linking, Platform, ScrollView, StatusBar, Text, TextInput, TouchableOpacity, View } from "react-native";
+
+const isLiquidGlassAvailable = Platform.OS === 'ios' && parseInt(Platform.Version, 10) >= 26;
 import { LanguageType, translations, useLanguage } from '../../context/language';
 import { useNotifications } from '../../context/notifications';
 import { ThemeType, useTheme } from '../../context/theme';
@@ -13,25 +16,24 @@ import { auth, db, storage } from "../../firebaseConfig";
 import { useThemeStyles } from '../../utils/theme-styles';
  import { sendNotificationToUser } from '../../utils/sendNotification';                                                                 
   
-const ProfileModalComponent = ({ visible, onClose, userData, onSave, loading }) => {
+const ProfileModalComponent = forwardRef(({ onDismiss, userData, onSave, loading }, ref) => {
   const { isDarkMode } = useTheme();
   const { language } = useLanguage();
   const t = translations[language];
-  
+  const snapPoints = useMemo(() => ['50%', '90%'], []);
+
   const [localFullName, setLocalFullName] = useState(userData?.fullName || '');
   const [localPhone, setLocalPhone] = useState(userData?.phone || '');
   const [localFinCode, setLocalFinCode] = useState(userData?.finCode || '');
   const [localImage, setLocalImage] = useState(null);
-  
-  useEffect(() => {
-    if (visible) {
-      setLocalFullName(userData?.fullName || '');
-      setLocalPhone(userData?.phone || '');
-      setLocalFinCode(userData?.finCode || '');
-      setLocalImage(null);
-    }
-  }, [visible, userData]);
-  
+
+  const resetForm = useCallback(() => {
+    setLocalFullName(userData?.fullName || '');
+    setLocalPhone(userData?.phone || '');
+    setLocalFinCode(userData?.finCode || '');
+    setLocalImage(null);
+  }, [userData]);
+
   const pickImage = async () => {
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -39,14 +41,14 @@ const ProfileModalComponent = ({ visible, onClose, userData, onSave, loading }) 
         Alert.alert(t.errors.errorTitle, t.errors.permissionDenied);
         return;
       }
-      
+
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         aspect: [1, 1],
         quality: 0.7,
       });
-      
+
       if (!result.canceled) {
         setLocalImage(result.assets[0].uri);
       }
@@ -55,12 +57,12 @@ const ProfileModalComponent = ({ visible, onClose, userData, onSave, loading }) 
       Alert.alert(t.errors.errorTitle, t.errors.imagePicking);
     }
   };
-  
+
   const handleCancel = () => {
     setLocalImage(null);
-    onClose();
+    ref.current?.dismiss();
   };
-  
+
   const handleSave = () => {
     onSave({
       fullName: localFullName,
@@ -69,108 +71,113 @@ const ProfileModalComponent = ({ visible, onClose, userData, onSave, loading }) 
       selectedImage: localImage
     });
   };
-  
-  return (
-    <Modal
-      animationType="fade"
-      transparent={true}
-      visible={visible}
-      onRequestClose={handleCancel}
-    >
-      <View style={{
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'rgba(0,0,0,0.6)',
-        padding: 20,
-      }}>
-        <View className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} p-6 rounded-xl w-11/12 mx-2`}>
-          <Text className={`text-xl font-bold mb-5 text-center ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
-            {t.profile.profileInfo}
-          </Text>
-          
-          <View className="items-center mb-5">
-            <TouchableOpacity onPress={pickImage}>
-              {localImage ? (
-                <Image 
-                  source={{ uri: localImage }} 
-                  className="w-28 h-28 rounded-full"
-                />
-              ) : userData?.logoURL ? (
-                <Image 
-                  source={{ uri: userData.logoURL }} 
-                  className="w-28 h-28 rounded-full"
-                />
-              ) : (
-                <View className={`w-28 h-28 rounded-full ${isDarkMode ? 'bg-indigo-800' : 'bg-indigo-100'} items-center justify-center`}>
-                  <Ionicons name="person" size={50} color={isDarkMode ? "#818cf8" : "#6366f1"} />
-                </View>
-              )}
-              <View className="absolute bottom-0 right-0 bg-indigo-600 rounded-full p-2">
-                <Ionicons name="camera" size={20} color="white" />
-              </View>
-            </TouchableOpacity>
-          </View>
-          
-          <Text className={`${isDarkMode ? 'text-gray-200' : 'text-gray-800'} mb-1`}>{t.profile.fullName}</Text>
-          <TextInput
-            className={`border ${isDarkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-black'} rounded-lg p-3 mb-4`}
-            value={localFullName}
-            onChangeText={setLocalFullName}
-            placeholder={t.profile.fullName}
-            placeholderTextColor={isDarkMode ? '#9ca3af' : '#6b7280'}
-          />
-          
-          <Text className={`${isDarkMode ? 'text-gray-200' : 'text-gray-800'} mb-1`}>{t.profile.phone}</Text>
-          <TextInput
-            className={`border ${isDarkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-black'} rounded-lg p-3 mb-4`}
-            value={localPhone}
-            onChangeText={setLocalPhone}
-            placeholder={t.profile.phone}
-            placeholderTextColor={isDarkMode ? '#9ca3af' : '#6b7280'}
-            keyboardType="phone-pad"
-          />
-          
-          <Text className={`${isDarkMode ? 'text-gray-200' : 'text-gray-800'} mb-1`}>FIN {t.profile.code}</Text>
-          <TextInput
-            className={`border ${isDarkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-black'} rounded-lg p-3 mb-6`}
-            value={localFinCode}
-            onChangeText={setLocalFinCode}
-            placeholder={`FIN ${t.profile.code}`}
-            placeholderTextColor={isDarkMode ? '#9ca3af' : '#6b7280'}
-          />
-          
-          <View className="flex-row justify-center">
-            <TouchableOpacity 
-              className={`${isDarkMode ? 'bg-gray-600' : 'bg-gray-300'} py-3 px-6 rounded-lg mr-3`}
-              onPress={handleCancel}
-            >
-              <Text className={`${isDarkMode ? 'text-white' : 'text-gray-800'} font-medium`}>{t.profile.close}</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              className="bg-indigo-600 py-3 px-6 rounded-lg"
-              onPress={handleSave}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="#fff" size="small" />
-              ) : (
-                <Text className="text-white font-medium">{t.profile.save}</Text>
-              )}
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
-    </Modal>
-  );
-};
 
-const PasswordModalComponent = ({ visible, onClose, onChangePassword, loading }) => {
+  const renderBackdrop = useCallback(
+    (props) => (
+      <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} opacity={0.5} />
+    ),
+    []
+  );
+
+  return (
+    <BottomSheetModal
+      ref={ref}
+      index={0}
+      snapPoints={['60%', '90%']}
+      enablePanDownToClose={true}
+      onDismiss={onDismiss}
+      onChange={(index) => { if (index === 0) resetForm(); }}
+      backdropComponent={renderBackdrop}
+      handleIndicatorStyle={{ backgroundColor: isDarkMode ? '#9ca3af' : '#d1d5db' }}
+      backgroundStyle={{ backgroundColor: isLiquidGlassAvailable ? 'transparent' : (isDarkMode ? '#1f2937' : '#ffffff') }}
+    >
+      <BottomSheetScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 24 }}>
+        <Text className={`text-xl font-bold mb-5 text-center ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+          {t.profile.profileInfo}
+        </Text>
+
+        <View className="items-center mb-5">
+          <TouchableOpacity onPress={pickImage}>
+            {localImage ? (
+              <Image
+                source={{ uri: localImage }}
+                className="w-28 h-28 rounded-full"
+              />
+            ) : userData?.logoURL ? (
+              <Image
+                source={{ uri: userData.logoURL }}
+                className="w-28 h-28 rounded-full"
+              />
+            ) : (
+              <View className={`w-28 h-28 rounded-full ${isDarkMode ? 'bg-indigo-800' : 'bg-indigo-100'} items-center justify-center`}>
+                <Ionicons name="person" size={50} color={isDarkMode ? "#818cf8" : "#6366f1"} />
+              </View>
+            )}
+            <View className="absolute bottom-0 right-0 bg-indigo-600 rounded-full p-2">
+              <Ionicons name="camera" size={20} color="white" />
+            </View>
+          </TouchableOpacity>
+        </View>
+
+        <Text className={`${isDarkMode ? 'text-gray-200' : 'text-gray-800'} mb-1`}>{t.profile.fullName}</Text>
+        <TextInput
+          className={`border ${isDarkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-black'} rounded-lg p-3 mb-4`}
+          value={localFullName}
+          onChangeText={setLocalFullName}
+          placeholder={t.profile.fullName}
+          placeholderTextColor={isDarkMode ? '#9ca3af' : '#6b7280'}
+        />
+
+        <Text className={`${isDarkMode ? 'text-gray-200' : 'text-gray-800'} mb-1`}>{t.profile.phone}</Text>
+        <TextInput
+          className={`border ${isDarkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-black'} rounded-lg p-3 mb-4`}
+          value={localPhone}
+          onChangeText={setLocalPhone}
+          placeholder={t.profile.phone}
+          placeholderTextColor={isDarkMode ? '#9ca3af' : '#6b7280'}
+          keyboardType="phone-pad"
+        />
+
+        <Text className={`${isDarkMode ? 'text-gray-200' : 'text-gray-800'} mb-1`}>FIN {t.profile.code}</Text>
+        <TextInput
+          className={`border ${isDarkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-black'} rounded-lg p-3 mb-6`}
+          value={localFinCode}
+          onChangeText={setLocalFinCode}
+          placeholder={`FIN ${t.profile.code}`}
+          placeholderTextColor={isDarkMode ? '#9ca3af' : '#6b7280'}
+        />
+
+        <View className="flex-row justify-center">
+          <TouchableOpacity
+            className={`${isDarkMode ? 'bg-gray-600' : 'bg-gray-300'} py-3 px-6 rounded-lg mr-3`}
+            onPress={handleCancel}
+          >
+            <Text className={`${isDarkMode ? 'text-white' : 'text-gray-800'} font-medium`}>{t.profile.close}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            className="bg-indigo-600 py-3 px-6 rounded-lg"
+            onPress={handleSave}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <Text className="text-white font-medium">{t.profile.save}</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+      </BottomSheetScrollView>
+    </BottomSheetModal>
+  );
+});
+
+const PasswordModalComponent = forwardRef(({ onDismiss, onChangePassword, loading }, ref) => {
   const { isDarkMode } = useTheme();
   const { language } = useLanguage();
   const t = translations[language];
-  
+  const snapPoints = useMemo(() => ['50%', '90%'], []);
+
   const [localOldPassword, setLocalOldPassword] = useState('');
   const [localNewPassword, setLocalNewPassword] = useState('');
   const [localConfirmPassword, setLocalConfirmPassword] = useState('');
@@ -178,18 +185,10 @@ const PasswordModalComponent = ({ visible, onClose, onChangePassword, loading })
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  useEffect(() => {
-    if (visible) {
-      setLocalOldPassword('');
-      setLocalNewPassword('');
-      setLocalConfirmPassword('');
-    }
-  }, [visible]);
-  
   const handleCancel = () => {
-    onClose();
+    ref.current?.dismiss();
   };
-  
+
   const handleSave = () => {
     onChangePassword({
       oldPassword: localOldPassword,
@@ -197,272 +196,244 @@ const PasswordModalComponent = ({ visible, onClose, onChangePassword, loading })
       confirmPassword: localConfirmPassword
     });
   };
-  
-  return (
-    <Modal
-      animationType="fade"
-      transparent={true}
-      visible={visible}
-      onRequestClose={handleCancel}
-    >
-      <View style={{
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'rgba(0,0,0,0.6)',
-        padding: 20,
-      }}>
-        <View className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} p-6 rounded-xl w-11/12 mx-2`}>
-          <Text className={`text-xl font-bold mb-5 text-center ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>{t.profile.passwordChange}</Text>
-          
-          <Text className={`${isDarkMode ? 'text-gray-200' : 'text-gray-800'} mb-1`}>{t.profile.currentPassword}</Text>
-          <View className={`flex-row items-center border ${isDarkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-black'} rounded-lg p-1 mb-4`}>
 
+  const renderBackdrop = useCallback(
+    (props) => (
+      <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} opacity={0.5} />
+    ),
+    []
+  );
+
+  return (
+    <BottomSheetModal
+      ref={ref}
+      index={0}
+      snapPoints={snapPoints}
+      enablePanDownToClose={true}
+      onDismiss={onDismiss}
+      backdropComponent={renderBackdrop}
+      handleIndicatorStyle={{ backgroundColor: isDarkMode ? '#9ca3af' : '#d1d5db' }}
+      backgroundStyle={{ backgroundColor: isLiquidGlassAvailable ? 'transparent' : (isDarkMode ? '#1f2937' : '#ffffff') }}
+    >
+      <BottomSheetScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 24 }}>
+        <Text className={`text-xl font-bold mb-5 text-center ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>{t.profile.passwordChange}</Text>
+
+        <Text className={`${isDarkMode ? 'text-gray-200' : 'text-gray-800'} mb-1`}>{t.profile.currentPassword}</Text>
+        <View className={`flex-row items-center border ${isDarkMode ? 'border-gray-600 bg-gray-700' : 'border-gray-300 bg-white'} rounded-lg p-1 mb-4`}>
           <TextInput
-            className={`flex-1`}
-            value={localOldPassword}  
+            className="flex-1"
+            value={localOldPassword}
             onChangeText={setLocalOldPassword}
             placeholder="********"
             placeholderTextColor={isDarkMode ? '#9ca3af' : '#6b7280'}
             secureTextEntry={!showOldPassword}
           />
-              <TouchableOpacity onPress={() => setShowOldPassword(!showOldPassword)}>
-                <Ionicons 
-                  name={showOldPassword ? "eye-off-outline" : "eye-outline"} 
-                  size={24} 
-                  color="#6b7280" 
-                />
-              </TouchableOpacity>
-            </View>
-          <Text className={`${isDarkMode ? 'text-gray-200' : 'text-gray-800'} mb-1`}>{t.profile.newPassword}</Text>
-          <View className={`flex-row items-center border ${isDarkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-black'} rounded-lg p-1 mb-4`}>
+          <TouchableOpacity onPress={() => setShowOldPassword(!showOldPassword)}>
+            <Ionicons name={showOldPassword ? "eye-off-outline" : "eye-outline"} size={24} color="#6b7280" />
+          </TouchableOpacity>
+        </View>
+
+        <Text className={`${isDarkMode ? 'text-gray-200' : 'text-gray-800'} mb-1`}>{t.profile.newPassword}</Text>
+        <View className={`flex-row items-center border ${isDarkMode ? 'border-gray-600 bg-gray-700' : 'border-gray-300 bg-white'} rounded-lg p-1 mb-4`}>
           <TextInput
-            className={`flex-1`}
+            className="flex-1"
             value={localNewPassword}
             onChangeText={setLocalNewPassword}
             placeholder="********"
             placeholderTextColor={isDarkMode ? '#9ca3af' : '#6b7280'}
             secureTextEntry={!showNewPassword}
           />
-              <TouchableOpacity onPress={() => setShowNewPassword(!showNewPassword)}>
-                <Ionicons 
-                  name={showNewPassword ? "eye-off-outline" : "eye-outline"} 
-                  size={24} 
-                  color="#6b7280" 
-                />
-              </TouchableOpacity>
-            </View>
+          <TouchableOpacity onPress={() => setShowNewPassword(!showNewPassword)}>
+            <Ionicons name={showNewPassword ? "eye-off-outline" : "eye-outline"} size={24} color="#6b7280" />
+          </TouchableOpacity>
+        </View>
 
-          
-          <Text className={`${isDarkMode ? 'text-gray-200' : 'text-gray-800'} mb-1`}>{t.profile.confirmPassword}</Text>
-          <View className={`flex-row items-center border ${isDarkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-black'} rounded-lg p-1 mb-4`}>
+        <Text className={`${isDarkMode ? 'text-gray-200' : 'text-gray-800'} mb-1`}>{t.profile.confirmPassword}</Text>
+        <View className={`flex-row items-center border ${isDarkMode ? 'border-gray-600 bg-gray-700' : 'border-gray-300 bg-white'} rounded-lg p-1 mb-4`}>
           <TextInput
-            className={`flex-1`}
+            className="flex-1"
             value={localConfirmPassword}
             onChangeText={setLocalConfirmPassword}
             placeholder="********"
             placeholderTextColor={isDarkMode ? '#9ca3af' : '#6b7280'}
             secureTextEntry={!showConfirmPassword}
           />
-              <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
-                <Ionicons 
-                  name={showConfirmPassword ? "eye-off-outline" : "eye-outline"} 
-                  size={24} 
-                  color="#6b7280" 
-                />
-              </TouchableOpacity>
-            </View>
-          <View className="flex-row justify-center">
-            <TouchableOpacity 
-              className={`${isDarkMode ? 'bg-gray-600' : 'bg-gray-300'} py-3 px-6 rounded-lg mr-3`}
-              onPress={handleCancel}
-            >
-              <Text className={`${isDarkMode ? 'text-white' : 'text-gray-800'} font-medium`}>{t.profile.close}</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              className="bg-indigo-600 py-3 px-6 rounded-lg"
-              onPress={handleSave}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="#fff" size="small" />
-              ) : (
-                <Text className="text-white font-medium">{t.profile.save}</Text>
-              )}
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
+            <Ionicons name={showConfirmPassword ? "eye-off-outline" : "eye-outline"} size={24} color="#6b7280" />
+          </TouchableOpacity>
         </View>
-      </View>
-    </Modal>
-  );
-};
 
-const ThemeModalComponent = ({ visible, onClose, currentTheme, onThemeChange }) => {
+        <View className="flex-row justify-center">
+          <TouchableOpacity
+            className={`${isDarkMode ? 'bg-gray-600' : 'bg-gray-300'} py-3 px-6 rounded-lg mr-3`}
+            onPress={handleCancel}
+          >
+            <Text className={`${isDarkMode ? 'text-white' : 'text-gray-800'} font-medium`}>{t.profile.close}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            className="bg-indigo-600 py-3 px-6 rounded-lg"
+            onPress={handleSave}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <Text className="text-white font-medium">{t.profile.save}</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+      </BottomSheetScrollView>
+    </BottomSheetModal>
+  );
+});
+
+const ThemeModalComponent = forwardRef(({ onDismiss, currentTheme, onThemeChange }, ref) => {
   const { isDarkMode } = useTheme();
   const { language } = useLanguage();
   const t = translations[language];
-  
+  const snapPoints = useMemo(() => ['45%', '90%'], []);
+
+  const renderBackdrop = useCallback(
+    (props) => (
+      <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} opacity={0.5} />
+    ),
+    []
+  );
+
   return (
-    <Modal
-      animationType="fade"
-      transparent={true}
-      visible={visible}
-      onRequestClose={onClose}
+    <BottomSheetModal
+      ref={ref}
+      index={0}
+      snapPoints={snapPoints}
+      enablePanDownToClose={true}
+      onDismiss={onDismiss}
+      backdropComponent={renderBackdrop}
+      handleIndicatorStyle={{ backgroundColor: isDarkMode ? '#9ca3af' : '#d1d5db' }}
+      backgroundStyle={{ backgroundColor: isLiquidGlassAvailable ? 'transparent' : (isDarkMode ? '#1f2937' : '#ffffff') }}
     >
-      <View style={{
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'rgba(0,0,0,0.6)',
-        padding: 20,
-      }}>
-        <View className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} p-6 rounded-xl w-11/12 mx-2`}>
-          <Text className={`text-xl font-bold mb-5 text-center ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
-            {t.theme.title}
-          </Text>
-          
-          <TouchableOpacity 
-            className={`flex-row items-center justify-between p-4 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-100'} ${currentTheme === ThemeType.LIGHT ? isDarkMode ? 'bg-gray-700' : 'bg-indigo-50' : ''}`}
-            onPress={() => onThemeChange(ThemeType.LIGHT)}
-          >
-            <View className="flex-row items-center">
-              <Ionicons name="sunny-outline" size={24} color={isDarkMode ? "#818cf8" : "#6366f1"} />
-              <Text className={`ml-3 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'} text-base`}>
-                {t.theme.light}
-              </Text>
-            </View>
-            {currentTheme === ThemeType.LIGHT && <Ionicons name="checkmark" size={24} color={isDarkMode ? "#818cf8" : "#6366f1"} />}
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            className={`flex-row items-center justify-between p-4 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-100'} ${currentTheme === ThemeType.DARK ? isDarkMode ? 'bg-gray-700' : 'bg-indigo-50' : ''}`}
-            onPress={() => onThemeChange(ThemeType.DARK)}
-          >
-            <View className="flex-row items-center">
-              <Ionicons name="moon-outline" size={24} color={isDarkMode ? "#818cf8" : "#6366f1"} />
-              <Text className={`ml-3 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'} text-base`}>
-                {t.theme.dark}
-              </Text>
-            </View>
-            {currentTheme === ThemeType.DARK && <Ionicons name="checkmark" size={24} color={isDarkMode ? "#818cf8" : "#6366f1"} />}
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            className={`flex-row items-center justify-between p-4 ${currentTheme === ThemeType.SYSTEM ? isDarkMode ? 'bg-gray-700' : 'bg-indigo-50' : ''}`}
-            onPress={() => onThemeChange(ThemeType.SYSTEM)}
-          >
-            <View className="flex-row items-center">
-              <Ionicons name="phone-portrait-outline" size={24} color={isDarkMode ? "#818cf8" : "#6366f1"} />
-              <Text className={`ml-3 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'} text-base`}>
-                {t.theme.system}
-              </Text>
-            </View>
-            {currentTheme === ThemeType.SYSTEM && <Ionicons name="checkmark" size={24} color={isDarkMode ? "#818cf8" : "#6366f1"} />}
-          </TouchableOpacity>
-          
-          <View className="flex-row justify-center mt-5">
-            <TouchableOpacity 
-              className={`${isDarkMode ? 'bg-gray-600' : 'bg-gray-300'} py-3 px-6 rounded-lg`}
-              onPress={onClose}
-            >
-              <Text className={`${isDarkMode ? 'text-white' : 'text-gray-800'} font-medium`}>
-                {t.profile.close}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
-    </Modal>
-  );
-};
+      <BottomSheetView style={{ flex: 1, padding: 24 }}>
+        <Text className={`text-xl font-bold mb-5 text-center ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+          {t.theme.title}
+        </Text>
 
-const LanguageModalComponent = ({ visible, onClose, currentLanguage, onLanguageChange }) => {
+        <TouchableOpacity
+          className={`flex-row items-center justify-between p-4 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-100'} ${currentTheme === ThemeType.LIGHT ? isDarkMode ? 'bg-gray-700' : 'bg-indigo-50' : ''}`}
+          onPress={() => onThemeChange(ThemeType.LIGHT)}
+        >
+          <View className="flex-row items-center">
+            <Ionicons name="sunny-outline" size={24} color={isDarkMode ? "#818cf8" : "#6366f1"} />
+            <Text className={`ml-3 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'} text-base`}>{t.theme.light}</Text>
+          </View>
+          {currentTheme === ThemeType.LIGHT && <Ionicons name="checkmark" size={24} color={isDarkMode ? "#818cf8" : "#6366f1"} />}
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          className={`flex-row items-center justify-between p-4 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-100'} ${currentTheme === ThemeType.DARK ? isDarkMode ? 'bg-gray-700' : 'bg-indigo-50' : ''}`}
+          onPress={() => onThemeChange(ThemeType.DARK)}
+        >
+          <View className="flex-row items-center">
+            <Ionicons name="moon-outline" size={24} color={isDarkMode ? "#818cf8" : "#6366f1"} />
+            <Text className={`ml-3 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'} text-base`}>{t.theme.dark}</Text>
+          </View>
+          {currentTheme === ThemeType.DARK && <Ionicons name="checkmark" size={24} color={isDarkMode ? "#818cf8" : "#6366f1"} />}
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          className={`flex-row items-center justify-between p-4 ${currentTheme === ThemeType.SYSTEM ? isDarkMode ? 'bg-gray-700' : 'bg-indigo-50' : ''}`}
+          onPress={() => onThemeChange(ThemeType.SYSTEM)}
+        >
+          <View className="flex-row items-center">
+            <Ionicons name="phone-portrait-outline" size={24} color={isDarkMode ? "#818cf8" : "#6366f1"} />
+            <Text className={`ml-3 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'} text-base`}>{t.theme.system}</Text>
+          </View>
+          {currentTheme === ThemeType.SYSTEM && <Ionicons name="checkmark" size={24} color={isDarkMode ? "#818cf8" : "#6366f1"} />}
+        </TouchableOpacity>
+
+        <View className="flex-row justify-center mt-5">
+          <TouchableOpacity
+            className={`${isDarkMode ? 'bg-gray-600' : 'bg-gray-300'} py-3 px-6 rounded-lg`}
+            onPress={() => ref.current?.dismiss()}
+          >
+            <Text className={`${isDarkMode ? 'text-white' : 'text-gray-800'} font-medium`}>{t.profile.close}</Text>
+          </TouchableOpacity>
+        </View>
+      </BottomSheetView>
+    </BottomSheetModal>
+  );
+});
+
+const LanguageModalComponent = forwardRef(({ onDismiss, currentLanguage, onLanguageChange }, ref) => {
   const { isDarkMode } = useTheme();
   const { language } = useLanguage();
   const t = translations[language];
-  
+  const snapPoints = useMemo(() => ['45%', '90%'], []);
+
+  const renderBackdrop = useCallback(
+    (props) => (
+      <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} opacity={0.5} />
+    ),
+    []
+  );
+
   return (
-    <Modal
-      animationType="fade"
-      transparent={true}
-      visible={visible}
-      onRequestClose={onClose}
+    <BottomSheetModal
+      ref={ref}
+      index={0}
+      snapPoints={snapPoints}
+      enablePanDownToClose={true}
+      onDismiss={onDismiss}
+      backdropComponent={renderBackdrop}
+      handleIndicatorStyle={{ backgroundColor: isDarkMode ? '#9ca3af' : '#d1d5db' }}
+      backgroundStyle={{ backgroundColor: isLiquidGlassAvailable ? 'transparent' : (isDarkMode ? '#1f2937' : '#ffffff') }}
     >
-      <View style={{
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'rgba(0,0,0,0.6)',
-        padding: 20,
-      }}>
-        <View className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} p-6 rounded-xl w-11/12 mx-2`}>
-          <Text className={`text-xl font-bold mb-5 text-center ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
-            {t.language.title}
-          </Text>
-          
-          <TouchableOpacity 
-            className={`flex-row items-center justify-between p-4 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-100'} ${currentLanguage === LanguageType.AZERBAIJANI ? isDarkMode ? 'bg-gray-700' : 'bg-indigo-50' : ''}`}
-            onPress={() => onLanguageChange(LanguageType.AZERBAIJANI)}
-          >
-            <View className="flex-row items-center">
-              <Text className={`ml-3 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'} text-base`}>
-                {t.language.azerbaijani}
-              </Text>
-            </View>
-            {currentLanguage === LanguageType.AZERBAIJANI && 
-              <Ionicons name="checkmark" size={24} color={isDarkMode ? "#818cf8" : "#6366f1"} />
-            }
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            className={`flex-row items-center justify-between p-4 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-100'} ${currentLanguage === LanguageType.ENGLISH ? isDarkMode ? 'bg-gray-700' : 'bg-indigo-50' : ''}`}
-            onPress={() => onLanguageChange(LanguageType.ENGLISH)}
-          >
-            <View className="flex-row items-center">
-              <Text className={`ml-3 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'} text-base`}>
-                {t.language.english}
-              </Text>
-            </View>
-            {currentLanguage === LanguageType.ENGLISH && 
-              <Ionicons name="checkmark" size={24} color={isDarkMode ? "#818cf8" : "#6366f1"} />
-            }
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            className={`flex-row items-center justify-between p-4 ${currentLanguage === LanguageType.RUSSIAN ? isDarkMode ? 'bg-gray-700' : 'bg-indigo-50' : ''}`}
-            onPress={() => onLanguageChange(LanguageType.RUSSIAN)}
-          >
-            <View className="flex-row items-center">
-              <Text className={`ml-3 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'} text-base`}>
-                {t.language.russian}
-              </Text>
-            </View>
-            {currentLanguage === LanguageType.RUSSIAN && 
-              <Ionicons name="checkmark" size={24} color={isDarkMode ? "#818cf8" : "#6366f1"} />
-            }
-          </TouchableOpacity>
-          
-          <View className="flex-row justify-center mt-5">
-            <TouchableOpacity 
-              className={`${isDarkMode ? 'bg-gray-600' : 'bg-gray-300'} py-3 px-6 rounded-lg`}
-              onPress={onClose}
-            >
-              <Text className={`${isDarkMode ? 'text-white' : 'text-gray-800'} font-medium`}>
-                {t.profile.close}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
-    </Modal>
-  );
-};
+      <BottomSheetView style={{ flex: 1, padding: 24 }}>
+        <Text className={`text-xl font-bold mb-5 text-center ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+          {t.language.title}
+        </Text>
 
-const NotificationsModalComponent = ({ visible, onClose, settings, onUpdateSetting, onToggleAll }) => {
+        <TouchableOpacity
+          className={`flex-row items-center justify-between p-4 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-100'} ${currentLanguage === LanguageType.AZERBAIJANI ? isDarkMode ? 'bg-gray-700' : 'bg-indigo-50' : ''}`}
+          onPress={() => onLanguageChange(LanguageType.AZERBAIJANI)}
+        >
+          <Text className={`${isDarkMode ? 'text-gray-200' : 'text-gray-700'} text-base`}>{t.language.azerbaijani}</Text>
+          {currentLanguage === LanguageType.AZERBAIJANI && <Ionicons name="checkmark" size={24} color={isDarkMode ? "#818cf8" : "#6366f1"} />}
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          className={`flex-row items-center justify-between p-4 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-100'} ${currentLanguage === LanguageType.ENGLISH ? isDarkMode ? 'bg-gray-700' : 'bg-indigo-50' : ''}`}
+          onPress={() => onLanguageChange(LanguageType.ENGLISH)}
+        >
+          <Text className={`${isDarkMode ? 'text-gray-200' : 'text-gray-700'} text-base`}>{t.language.english}</Text>
+          {currentLanguage === LanguageType.ENGLISH && <Ionicons name="checkmark" size={24} color={isDarkMode ? "#818cf8" : "#6366f1"} />}
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          className={`flex-row items-center justify-between p-4 ${currentLanguage === LanguageType.RUSSIAN ? isDarkMode ? 'bg-gray-700' : 'bg-indigo-50' : ''}`}
+          onPress={() => onLanguageChange(LanguageType.RUSSIAN)}
+        >
+          <Text className={`${isDarkMode ? 'text-gray-200' : 'text-gray-700'} text-base`}>{t.language.russian}</Text>
+          {currentLanguage === LanguageType.RUSSIAN && <Ionicons name="checkmark" size={24} color={isDarkMode ? "#818cf8" : "#6366f1"} />}
+        </TouchableOpacity>
+
+        <View className="flex-row justify-center mt-5">
+          <TouchableOpacity
+            className={`${isDarkMode ? 'bg-gray-600' : 'bg-gray-300'} py-3 px-6 rounded-lg`}
+            onPress={() => ref.current?.dismiss()}
+          >
+            <Text className={`${isDarkMode ? 'text-white' : 'text-gray-800'} font-medium`}>{t.profile.close}</Text>
+          </TouchableOpacity>
+        </View>
+      </BottomSheetView>
+    </BottomSheetModal>
+  );
+});
+
+const NotificationsModalComponent = forwardRef(({ onDismiss, settings, onUpdateSetting, onToggleAll }, ref) => {
   const { isDarkMode } = useTheme();
   const { language } = useLanguage();
   const t = translations[language];
+  const snapPoints = useMemo(() => ['55%', '90%'], []);
 
   const NotificationSwitch = ({ label, value, onToggle, isMain = false }) => (
     <TouchableOpacity
@@ -473,118 +444,103 @@ const NotificationsModalComponent = ({ visible, onClose, settings, onUpdateSetti
         {label}
       </Text>
       <View className={`w-12 h-7 rounded-full ${value ? 'bg-indigo-600' : isDarkMode ? 'bg-gray-600' : 'bg-gray-300'} justify-center`}>
-        <View
-          className={`w-5 h-5 rounded-full bg-white shadow ${value ? 'ml-6' : 'ml-1'}`}
-        />
+        <View className={`w-5 h-5 rounded-full bg-white shadow ${value ? 'ml-6' : 'ml-1'}`} />
       </View>
     </TouchableOpacity>
   );
 
-  return (
-    <Modal
-      animationType="fade"
-      transparent={true}
-      visible={visible}
-      onRequestClose={onClose}
-    >
-      <View style={{
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'rgba(0,0,0,0.6)',
-        padding: 20,
-      }}>
-        <View className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} p-6 rounded-xl w-11/12 mx-2`}>
-          <Text className={`text-xl font-bold mb-5 text-center ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
-            {t.notifications?.title || 'Bildiriş Ayarları'}
-          </Text>
-
-          {/* Ana Switch - Bütün bildirişlər */}
-          <View className={`mb-4 rounded-lg overflow-hidden border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-            <NotificationSwitch
-              label={t.notifications?.allNotifications || 'Bütün bildirişlər'}
-              value={settings.allNotifications}
-              onToggle={(value) => onToggleAll(value)}
-              isMain={true}
-            />
-          </View>
-
-          {/* Alt ayarlar */}
-          <View className={`rounded-lg overflow-hidden border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-            <NotificationSwitch
-              label={t.notifications?.eventReminders || 'Tədbir xatırlatmaları'}
-              value={settings.eventReminders}
-              onToggle={(value) => onUpdateSetting('eventReminders', value)}
-            />
-
-            <NotificationSwitch
-              label={t.notifications?.newEvents || 'Yeni tədbirlər'}
-              value={settings.newEvents}
-              onToggle={(value) => onUpdateSetting('newEvents', value)}
-            />
-
-            <NotificationSwitch
-              label={t.notifications?.followedOrganisers || 'İzlədiyim təşkilatçılar'}
-              value={settings.followedOrganisers}
-              onToggle={(value) => onUpdateSetting('followedOrganisers', value)}
-            />
-
-            <NotificationSwitch
-              label={t.notifications?.promotions || 'Kampaniyalar və endirimlər'}
-              value={settings.promotions}
-              onToggle={(value) => onUpdateSetting('promotions', value)}
-            />
-          </View>
-
-          <View className="flex-row justify-center mt-5">
-            <TouchableOpacity
-              className={`${isDarkMode ? 'bg-gray-600' : 'bg-gray-300'} py-3 px-6 rounded-lg`}
-              onPress={onClose}
-            >
-              <Text className={`${isDarkMode ? 'text-white' : 'text-gray-800'} font-medium`}>
-                {t.profile.close}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
-    </Modal>
+  const renderBackdrop = useCallback(
+    (props) => (
+      <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} opacity={0.5} />
+    ),
+    []
   );
-};
 
-const ContactModalComponent = ({ visible, onClose, defaultEmail, defaultPhone, onSubmit, loading, mesajGonderildi, xeta }) => {
+  return (
+    <BottomSheetModal
+      ref={ref}
+      index={0}
+      snapPoints={snapPoints}
+      enablePanDownToClose={true}
+      onDismiss={onDismiss}
+      backdropComponent={renderBackdrop}
+      handleIndicatorStyle={{ backgroundColor: isDarkMode ? '#9ca3af' : '#d1d5db' }}
+      backgroundStyle={{ backgroundColor: isLiquidGlassAvailable ? 'transparent' : (isDarkMode ? '#1f2937' : '#ffffff') }}
+    >
+      <BottomSheetScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 24 }}>
+        <Text className={`text-xl font-bold mb-5 text-center ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+          {t.notifications?.title || 'Bildiriş Ayarları'}
+        </Text>
+
+        <View className={`mb-4 rounded-lg overflow-hidden border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+          <NotificationSwitch
+            label={t.notifications?.allNotifications || 'Bütün bildirişlər'}
+            value={settings.allNotifications}
+            onToggle={(value) => onToggleAll(value)}
+            isMain={true}
+          />
+        </View>
+
+        <View className={`rounded-lg overflow-hidden border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+          <NotificationSwitch
+            label={t.notifications?.eventReminders || 'Tədbir xatırlatmaları'}
+            value={settings.eventReminders}
+            onToggle={(value) => onUpdateSetting('eventReminders', value)}
+          />
+          <NotificationSwitch
+            label={t.notifications?.newEvents || 'Yeni tədbirlər'}
+            value={settings.newEvents}
+            onToggle={(value) => onUpdateSetting('newEvents', value)}
+          />
+          <NotificationSwitch
+            label={t.notifications?.followedOrganisers || 'İzlədiyim təşkilatçılar'}
+            value={settings.followedOrganisers}
+            onToggle={(value) => onUpdateSetting('followedOrganisers', value)}
+          />
+          <NotificationSwitch
+            label={t.notifications?.promotions || 'Kampaniyalar və endirimlər'}
+            value={settings.promotions}
+            onToggle={(value) => onUpdateSetting('promotions', value)}
+          />
+        </View>
+
+        <View className="flex-row justify-center mt-5">
+          <TouchableOpacity
+            className={`${isDarkMode ? 'bg-gray-600' : 'bg-gray-300'} py-3 px-6 rounded-lg`}
+            onPress={() => ref.current?.dismiss()}
+          >
+            <Text className={`${isDarkMode ? 'text-white' : 'text-gray-800'} font-medium`}>{t.profile.close}</Text>
+          </TouchableOpacity>
+        </View>
+      </BottomSheetScrollView>
+    </BottomSheetModal>
+  );
+});
+
+const ContactModalComponent = forwardRef(({ onDismiss, defaultEmail, defaultPhone, onSubmit, loading, mesajGonderildi, xeta }, ref) => {
   const { isDarkMode } = useTheme();
   const { language } = useLanguage();
   const t = translations[language];
-  
+  const snapPoints = useMemo(() => ['70%', '90%'], []);
+
   const [localEmail, setLocalEmail] = useState(defaultEmail || '');
   const [localPhone, setLocalPhone] = useState(defaultPhone || '');
   const [localMesaj, setLocalMesaj] = useState('');
-  
-  useEffect(() => {
-    if (visible) {
-      setLocalEmail(defaultEmail || '');
-      setLocalPhone(defaultPhone || '');
-      setLocalMesaj('');
-    }
-  }, [visible, defaultEmail, defaultPhone]);
-  
+
   useEffect(() => {
     if (mesajGonderildi) {
       setLocalMesaj('');
-      
       const timer = setTimeout(() => {
-        onClose();
+        ref.current?.dismiss();
       }, 3000);
-      
       return () => clearTimeout(timer);
     }
-  }, [mesajGonderildi, onClose]);
-  
+  }, [mesajGonderildi]);
+
   const handleCancel = () => {
-    onClose();
+    ref.current?.dismiss();
   };
-  
+
   const handleSubmit = () => {
     onSubmit({
       email: localEmail,
@@ -592,114 +548,166 @@ const ContactModalComponent = ({ visible, onClose, defaultEmail, defaultPhone, o
       mesaj: localMesaj
     });
   };
-  
-  return (
-    <Modal
-      animationType="fade"
-      transparent={true}
-      visible={visible}
-      onRequestClose={handleCancel}
-    >
-      <View style={{
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'rgba(0,0,0,0.6)',
-        padding: 20,
-      }}>
-        <View className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} p-6 rounded-xl w-11/12 max-h-5/6`}>
-          <ScrollView showsVerticalScrollIndicator={false}>
-            <Text className={`text-xl font-bold mb-6 text-center ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>{t.profile.contact}</Text>
-            
-            <View className="w-full flex-row justify-center gap-4 mb-8">
-              <TouchableOpacity onPress={() => Linking.openURL('https://t.me/+994705975727')}>
-                <FontAwesome name="telegram" size={40} color="#0088cc" />
-              </TouchableOpacity>
-              
-              <TouchableOpacity onPress={() => Linking.openURL('https://instagram.com/eventin.az')}>
-                <FontAwesome name="instagram" size={40} color="#E1306C" />
-              </TouchableOpacity>
-              
-              <TouchableOpacity onPress={() => Linking.openURL('mailto:info@eventin.az')}>
-                <MaterialCommunityIcons name="email" size={40} color="#D44638" />
-              </TouchableOpacity>
-              
-              <TouchableOpacity onPress={() => Linking.openURL('https://linkedin.com/company/eventinaz/about/?viewAsMember=true')}>
-                <FontAwesome name="linkedin-square" size={40} color="#0077B5" />
-              </TouchableOpacity>
-            </View>
-            
-            {mesajGonderildi ? (
-              <Text className="text-green-600 mb-4 text-center">{mesajGonderildi}</Text>
-            ) : null}
-            
-            {xeta ? (
-              <Text className="text-red-600 mb-4 text-center">{xeta}</Text>
-            ) : null}
-            
-            <Text className={`${isDarkMode ? 'text-gray-200' : 'text-gray-800'} mb-1`}>{t.profile.email}</Text>
-            <TextInput
-              className={`border ${isDarkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-black'} rounded-lg p-3 mb-4`}
-              value={localEmail}
-              onChangeText={setLocalEmail}
-              placeholder={t.profile.email}
-              placeholderTextColor={isDarkMode ? '#9ca3af' : '#6b7280'}
-              keyboardType="email-address"
-              editable={!loading}
-            />
-            
-            <Text className={`${isDarkMode ? 'text-gray-200' : 'text-gray-800'} mb-1`}>{t.profile.phone}</Text>
-            <TextInput
-              className={`border ${isDarkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-black'} rounded-lg p-3 mb-4`}
-              value={localPhone}
-              onChangeText={setLocalPhone}
-              placeholder={t.profile.phone}
-              placeholderTextColor={isDarkMode ? '#9ca3af' : '#6b7280'}
-              keyboardType="phone-pad"
-              editable={!loading}
-            />
-            
-            <Text className={`${isDarkMode ? 'text-gray-200' : 'text-gray-800'} mb-1`}>{t.profile.yourMessage}</Text>
-            <TextInput
-              className={`border ${isDarkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-black'} rounded-lg p-3 mb-6`}
-              value={localMesaj}
-              onChangeText={setLocalMesaj}
-              placeholder={t.profile.yourMessage}
-              placeholderTextColor={isDarkMode ? '#9ca3af' : '#6b7280'}
-              multiline={true}
-              numberOfLines={5}
-              textAlignVertical="top"
-              editable={!loading}
-              style={{ minHeight: 100 }}
-            />
-            
-            <View className="flex-row justify-center mb-3">
-              <TouchableOpacity 
-                className={`${isDarkMode ? 'bg-gray-600' : 'bg-gray-300'} py-3 px-6 rounded-lg mr-3`}
-                onPress={handleCancel}
-                disabled={loading}
-              >
-                <Text className={`${isDarkMode ? 'text-white' : 'text-gray-800'} font-medium`}>{t.profile.close}</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                className={`${(loading || !localEmail || !localPhone || !localMesaj) ? 'bg-indigo-400' : 'bg-indigo-600'} py-3 px-6 rounded-lg`}
-                onPress={handleSubmit}
-                disabled={loading || !localEmail || !localPhone || !localMesaj}
-              >
-                {loading ? (
-                  <ActivityIndicator color="#fff" size="small" />
-                ) : (
-                  <Text className="text-white font-medium">{t.profile.send}</Text>
-                )}
-              </TouchableOpacity>
-            </View>
-          </ScrollView>
-        </View>
-      </View>
-    </Modal>
+
+  const renderBackdrop = useCallback(
+    (props) => (
+      <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} opacity={0.5} />
+    ),
+    []
   );
-};
+
+  return (
+    <BottomSheetModal
+      ref={ref}
+      index={0}
+      snapPoints={snapPoints}
+      enablePanDownToClose={true}
+      onDismiss={onDismiss}
+      backdropComponent={renderBackdrop}
+      handleIndicatorStyle={{ backgroundColor: isDarkMode ? '#9ca3af' : '#d1d5db' }}
+      backgroundStyle={{ backgroundColor: isLiquidGlassAvailable ? 'transparent' : (isDarkMode ? '#1f2937' : '#ffffff') }}
+    >
+      <BottomSheetScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 24 }}>
+        <Text className={`text-xl font-bold mb-6 text-center ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>{t.profile.contact}</Text>
+
+        <View className="w-full flex-row justify-center gap-4 mb-8">
+          <TouchableOpacity onPress={() => Linking.openURL('https://t.me/+994705975727')}>
+            <FontAwesome name="telegram" size={40} color="#0088cc" />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => Linking.openURL('https://instagram.com/eventin.az')}>
+            <FontAwesome name="instagram" size={40} color="#E1306C" />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => Linking.openURL('mailto:info@eventin.az')}>
+            <MaterialCommunityIcons name="email" size={40} color="#D44638" />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => Linking.openURL('https://linkedin.com/company/eventinaz/about/?viewAsMember=true')}>
+            <FontAwesome name="linkedin-square" size={40} color="#0077B5" />
+          </TouchableOpacity>
+        </View>
+
+        {mesajGonderildi ? <Text className="text-green-600 mb-4 text-center">{mesajGonderildi}</Text> : null}
+        {xeta ? <Text className="text-red-600 mb-4 text-center">{xeta}</Text> : null}
+
+        <Text className={`${isDarkMode ? 'text-gray-200' : 'text-gray-800'} mb-1`}>{t.profile.email}</Text>
+        <TextInput
+          className={`border ${isDarkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-black'} rounded-lg p-3 mb-4`}
+          value={localEmail}
+          onChangeText={setLocalEmail}
+          placeholder={t.profile.email}
+          placeholderTextColor={isDarkMode ? '#9ca3af' : '#6b7280'}
+          keyboardType="email-address"
+          editable={!loading}
+        />
+
+        <Text className={`${isDarkMode ? 'text-gray-200' : 'text-gray-800'} mb-1`}>{t.profile.phone}</Text>
+        <TextInput
+          className={`border ${isDarkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-black'} rounded-lg p-3 mb-4`}
+          value={localPhone}
+          onChangeText={setLocalPhone}
+          placeholder={t.profile.phone}
+          placeholderTextColor={isDarkMode ? '#9ca3af' : '#6b7280'}
+          keyboardType="phone-pad"
+          editable={!loading}
+        />
+
+        <Text className={`${isDarkMode ? 'text-gray-200' : 'text-gray-800'} mb-1`}>{t.profile.yourMessage}</Text>
+        <TextInput
+          className={`border ${isDarkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-black'} rounded-lg p-3 mb-6`}
+          value={localMesaj}
+          onChangeText={setLocalMesaj}
+          placeholder={t.profile.yourMessage}
+          placeholderTextColor={isDarkMode ? '#9ca3af' : '#6b7280'}
+          multiline={true}
+          numberOfLines={5}
+          textAlignVertical="top"
+          editable={!loading}
+          style={{ minHeight: 100 }}
+        />
+
+        <View className="flex-row justify-center mb-3">
+          <TouchableOpacity
+            className={`${isDarkMode ? 'bg-gray-600' : 'bg-gray-300'} py-3 px-6 rounded-lg mr-3`}
+            onPress={handleCancel}
+            disabled={loading}
+          >
+            <Text className={`${isDarkMode ? 'text-white' : 'text-gray-800'} font-medium`}>{t.profile.close}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            className={`${(loading || !localEmail || !localPhone || !localMesaj) ? 'bg-indigo-400' : 'bg-indigo-600'} py-3 px-6 rounded-lg`}
+            onPress={handleSubmit}
+            disabled={loading || !localEmail || !localPhone || !localMesaj}
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <Text className="text-white font-medium">{t.profile.send}</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+      </BottomSheetScrollView>
+    </BottomSheetModal>
+  );
+});
+
+const LogoutModalComponent = forwardRef(({ onDismiss, onLogout, loading }, ref) => {
+  const { isDarkMode } = useTheme();
+  const { language } = useLanguage();
+  const t = translations[language];
+  const snapPoints = useMemo(() => ['30%'], []);
+
+  const renderBackdrop = useCallback(
+    (props) => (
+      <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} opacity={0.5} />
+    ),
+    []
+  );
+
+  return (
+    <BottomSheetModal
+      ref={ref}
+      index={0}
+      snapPoints={snapPoints}
+      enablePanDownToClose={true}
+      onDismiss={onDismiss}
+      backdropComponent={renderBackdrop}
+      handleIndicatorStyle={{ backgroundColor: isDarkMode ? '#9ca3af' : '#d1d5db' }}
+      backgroundStyle={{ backgroundColor: isLiquidGlassAvailable ? 'transparent' : (isDarkMode ? '#1f2937' : '#ffffff') }}
+    >
+      <BottomSheetView style={{ flex: 1, padding: 24 }}>
+        <Text className={`text-xl font-bold mb-5 text-center ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+          {t.profile.logoutConfirmTitle || "Hesabdan çıxış"}
+        </Text>
+
+        <Text className={`mb-6 text-center ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+          {t.profile.logoutConfirmMessage || "Hesabdan çıxış etmək istədiyinizə əminsiniz?"}
+        </Text>
+
+        <View className="flex-row justify-center">
+          <TouchableOpacity
+            className={`${isDarkMode ? 'bg-gray-600' : 'bg-gray-300'} py-3 px-6 rounded-lg mr-3`}
+            onPress={() => ref.current?.dismiss()}
+            disabled={loading}
+          >
+            <Text className={`${isDarkMode ? 'text-white' : 'text-gray-800'} font-medium`}>{t.general.cancel}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            className="bg-red-500 py-3 px-6 rounded-lg min-w-20"
+            onPress={onLogout}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <Text className="text-white font-medium">{t.general.confirm}</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+      </BottomSheetView>
+    </BottomSheetModal>
+  );
+});
 
 export default function Profile() {
   const router = useRouter();
@@ -715,25 +723,19 @@ export default function Profile() {
 
   const { settings: notificationSettings, updateSetting, toggleAllNotifications } = useNotifications();
 
-  const [profileModalVisible, setProfileModalVisible] = useState(false);
-  const [passwordModalVisible, setPasswordModalVisible] = useState(false);
-  const [themeModalVisible, setThemeModalVisible] = useState(false);
-  const [contactModalVisible, setContactModalVisible] = useState(false);
-  const [languageModalVisible, setLanguageModalVisible] = useState(false);
-  const [notificationsModalVisible, setNotificationsModalVisible] = useState(false);
-  
-  const [profileForm, setProfileForm] = useState({
-    fullName: '',
-    phone: '',
-    finCode: ''
-  });
-  
+  // Bottom Sheet Modal refs
+  const profileModalRef = useRef(null);
+  const passwordModalRef = useRef(null);
+  const themeModalRef = useRef(null);
+  const languageModalRef = useRef(null);
+  const notificationsModalRef = useRef(null);
+  const contactModalRef = useRef(null);
+  const logoutModalRef = useRef(null);
+
   const [mesajGonderildi, setMesajGonderildi] = useState("");
   const [xeta, setXeta] = useState("");
-  
-  const [userId, setUserId] = useState(null);
 
-  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [userId, setUserId] = useState(null);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -1017,7 +1019,7 @@ export default function Profile() {
           {/* Profil Bilgileri */}
           <TouchableOpacity 
             className={`flex-row items-center py-3 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}
-            onPress={() => setProfileModalVisible(true)}
+            onPress={() => profileModalRef.current?.present()}
           >
           <Ionicons name="person-outline" size={22} color={isDarkMode ? "#818cf8" : "#6366f1"} />
           <Text className={`ml-3 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
@@ -1029,7 +1031,7 @@ export default function Profile() {
           {/* Şifre Değiştirme */}
           <TouchableOpacity 
             className={`flex-row items-center py-3 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}
-            onPress={() => setPasswordModalVisible(true)}
+            onPress={() => passwordModalRef.current?.present()}
           >
           <Ionicons name="lock-closed-outline" size={22} color={isDarkMode ? "#818cf8" : "#6366f1"} />
           <Text className={`ml-3 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
@@ -1041,7 +1043,7 @@ export default function Profile() {
           {/* Bildirişlər */}
           <TouchableOpacity
             className={`flex-row items-center py-3 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}
-            onPress={() => setNotificationsModalVisible(true)}
+            onPress={() => notificationsModalRef.current?.present()}
           >
             <Ionicons name="notifications-outline" size={22} color={isDarkMode ? "#818cf8" : "#6366f1"} />
             <Text className={`ml-3 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
@@ -1053,7 +1055,7 @@ export default function Profile() {
           {/* Tema */}
           <TouchableOpacity 
             className={`flex-row items-center py-3 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}
-            onPress={() => setThemeModalVisible(true)}
+            onPress={() => themeModalRef.current?.present()}
           >
             <Ionicons name="contrast-outline" size={22} color={isDarkMode ? "#818cf8" : "#6366f1"} />
             <Text className={`ml-3 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
@@ -1065,7 +1067,7 @@ export default function Profile() {
           {/* Dil */}
           <TouchableOpacity 
             className={`flex-row items-center py-3 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}
-            onPress={() => setLanguageModalVisible(true)}
+            onPress={() => languageModalRef.current?.present()}
           >
             <Ionicons name="language-outline" size={22} color={isDarkMode ? "#818cf8" : "#6366f1"} />
             <Text className={`ml-3 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
@@ -1077,7 +1079,7 @@ export default function Profile() {
           {/* Elaqe */}
           <TouchableOpacity 
             className={`flex-row items-center py-3 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}
-            onPress={() => setContactModalVisible(true)}
+            onPress={() => contactModalRef.current?.present()}
           >
             <Ionicons name="call-outline" size={22} color={isDarkMode ? "#818cf8" : "#6366f1"} />
             <Text className={`ml-3 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
@@ -1089,7 +1091,7 @@ export default function Profile() {
           {/* Hesabdan Çıxış */}
           <TouchableOpacity
             className="flex-row items-center py-3"
-            onPress={() => setShowLogoutModal(true)}
+            onPress={() => logoutModalRef.current?.present()}
           >
             <Ionicons name="log-out-outline" size={22} color="#ef4444" />
             <Text className="ml-3 text-red-500 font-semibold">
@@ -1099,50 +1101,44 @@ export default function Profile() {
       </View>
 
       {/* Modallar */}
-      <ProfileModalComponent 
-        visible={profileModalVisible} 
-        onClose={() => setProfileModalVisible(false)} 
-        userData={userData} 
+      <ProfileModalComponent
+        ref={profileModalRef}
+        userData={userData}
         onSave={handleUpdateProfile}
         loading={loading}
       />
-      
-      <PasswordModalComponent 
-        visible={passwordModalVisible} 
-        onClose={() => setPasswordModalVisible(false)} 
+
+      <PasswordModalComponent
+        ref={passwordModalRef}
         onChangePassword={handleChangePassword}
         loading={loading}
       />
-      
-      <ThemeModalComponent 
-        visible={themeModalVisible} 
-        onClose={() => setThemeModalVisible(false)} 
+
+      <ThemeModalComponent
+        ref={themeModalRef}
         currentTheme={theme}
         onThemeChange={handleThemeChange}
       />
-      
+
       <LanguageModalComponent
-        visible={languageModalVisible}
-        onClose={() => setLanguageModalVisible(false)}
+        ref={languageModalRef}
         currentLanguage={language}
         onLanguageChange={handleLanguageChange}
       />
 
       <NotificationsModalComponent
-        visible={notificationsModalVisible}
-        onClose={() => setNotificationsModalVisible(false)}
+        ref={notificationsModalRef}
         settings={notificationSettings}
         onUpdateSetting={updateSetting}
         onToggleAll={toggleAllNotifications}
       />
 
-      <ContactModalComponent 
-        visible={contactModalVisible} 
-        onClose={() => {
+      <ContactModalComponent
+        ref={contactModalRef}
+        onDismiss={() => {
           setMesajGonderildi("");
           setXeta("");
-          setContactModalVisible(false);
-        }} 
+        }}
         defaultEmail={userData?.email || ""}
         defaultPhone={userData?.phone || ""}
         onSubmit={handleSubmitContact}
@@ -1152,56 +1148,11 @@ export default function Profile() {
       />
       
       {/* Çıkış Onay Modalı */}
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={showLogoutModal}
-        onRequestClose={() => setShowLogoutModal(false)}
-      >
-        <View style={{
-          flex: 1,
-          justifyContent: 'center',
-          alignItems: 'center',
-          backgroundColor: 'rgba(0,0,0,0.6)',
-          padding: 20,
-        }}>
-          <View className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} p-6 rounded-xl w-11/12 mx-2`}>
-            <Text className={`text-xl font-bold mb-5 text-center ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
-              {t.profile.logoutConfirmTitle || "Hesabdan çıxış"}
-            </Text>
-            
-            <Text className={`mb-6 text-center ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
-              {t.profile.logoutConfirmMessage || "Hesabdan çıxış etmək istədiyinizə əminsiniz?"}
-            </Text>
-            
-            <View className="flex-row justify-center">
-              <TouchableOpacity 
-                className={`${isDarkMode ? 'bg-gray-600' : 'bg-gray-300'} py-3 px-6 rounded-lg mr-3`}
-                onPress={() => setShowLogoutModal(false)}
-                disabled={loading}
-              >
-                <Text className={`${isDarkMode ? 'text-white' : 'text-gray-800'} font-medium`}>
-                  {t.general.cancel}
-                </Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                className="bg-red-500 py-3 px-6 rounded-lg min-w-20"
-                onPress={handleLogout}
-                disabled={loading}
-              >
-                {loading ? (
-                  <ActivityIndicator color="#fff" size="small" />
-                ) : (
-                  <Text className="text-white font-medium">
-                    {t.general.confirm}
-                  </Text>
-                )}
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+      <LogoutModalComponent
+        ref={logoutModalRef}
+        onLogout={handleLogout}
+        loading={loading}
+      />
     </View>
     </ScrollView>
   );

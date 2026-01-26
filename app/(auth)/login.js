@@ -134,8 +134,6 @@ export default function LoginScreen() {
           }
         }
 
-<<<<<<< HEAD
-=======
         // Push token-i yenilə və Firestore-a saxla
         try {
           const projectId = Constants.expoConfig?.extra?.eas?.projectId ?? '41b04da9-7852-4895-9150-5a64b8345080';
@@ -147,8 +145,6 @@ export default function LoginScreen() {
           console.log('Push token alınarkən xəta:', tokenError);
         }
 
-        // Başarılı giriş sonrası home sayfasına yönlendir
->>>>>>> 4af12af3fafd09518c6199dd70452c7dc17cec40
         router.replace('/(tabs)/home');
       }
     } catch (error) {

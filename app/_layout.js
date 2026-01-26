@@ -7,6 +7,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import { useEffect, useState, useRef } from "react";
 import { ActivityIndicator, StatusBar, useColorScheme, View, Image } from "react-native";
 import { LinearGradient } from 'expo-linear-gradient';
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { enableScreens } from "react-native-screens";
 import { AuthProvider } from '../context/auth';
@@ -120,7 +121,9 @@ export default function RootLayout() {
             <LanguageProvider>
               <NotificationsProvider>
                 <GlobalModalProvider>
-                  <RootLayoutNav user={user} />
+                  <BottomSheetModalProvider>
+                    <RootLayoutNav user={user} />
+                  </BottomSheetModalProvider>
                 </GlobalModalProvider>
               </NotificationsProvider>
             </LanguageProvider>

@@ -234,8 +234,14 @@ export const NotificationsProvider = ({ children }) => {
           await savePushTokenToFirestore(token);
         }
 
-        // Background notification task-ı register et
-        await Notifications.registerTaskAsync(BACKGROUND_NOTIFICATION_TASK);
+        // Background notification task-ı register et (iOS rebuild tələb edir)
+        try {
+          await Notifications.registerTaskAsync(BACKGROUND_NOTIFICATION_TASK);
+        } catch (taskError) {
+          // iOS-da background notifications konfiqurasiya olunmayıbsa bu xəta baş verir
+          // App yenidən build edilməlidir: npx expo prebuild --clean && npx expo run:ios
+          console.log('Background notification task registration skipped:', taskError.message);
+        }
       } catch (error) {
         console.error('Error initializing notifications:', error);
       } finally {

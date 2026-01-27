@@ -20,7 +20,7 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { format } from "date-fns";
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
@@ -36,13 +36,14 @@ const { width } = Dimensions.get('window');
 
 const EventDetailsPlaceholder = () => {
   const { isDarkMode } = useAppTheme();
-  
+  const insets = useSafeAreaInsets();
+
   return (
-    <SafeAreaView className={`flex-1 ${isDarkMode ? 'bg-gray-900' : 'bg-white'}`}>
+    <View className={`flex-1 ${isDarkMode ? 'bg-gray-900' : 'bg-white'}`}>
               <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} backgroundColor={isDarkMode ? "#111827" : "#F9FAFB"} />
       <Stack.Screen options={{ headerShown: false }} />
-      
-      <View className="flex-row justify-between items-center px-4 py-3 bg-transparent absolute z-20 top-0 left-0 right-0">
+
+      <View className="flex-row justify-between items-center px-4 bg-transparent absolute z-20 left-0 right-0" style={{ top: insets.top + 8 }}>
         <TouchableOpacity className={`p-2 ${isDarkMode ? 'bg-gray-800/50' : 'bg-white/50'} rounded-full`}>
           <Ionicons name="arrow-back" size={24} color={isDarkMode ? "#fff" : "#333"} />
         </TouchableOpacity>
@@ -111,12 +112,12 @@ const EventDetailsPlaceholder = () => {
         </View>
       </ScrollView>
       
-      <View className="absolute bottom-0 left-0 right-0 p-4 z-20 bg-transparent">
+      <View className="absolute left-0 right-0 p-4 z-20 bg-transparent" style={{ bottom: insets.bottom + 8 }}>
         <View className={`${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} rounded-lg py-3.5 items-center`}>
           <View className={`h-4 ${isDarkMode ? 'bg-gray-600' : 'bg-white'} w-[30%] rounded`} />
         </View>
       </View>
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -162,6 +163,7 @@ export default function EventDetails() {
   const { isDarkMode } = useAppTheme();
   const { language } = useLanguage();
   const t = translations[language];
+  const insets = useSafeAreaInsets();
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [relatedEvents, setRelatedEvents] = useState([]);
@@ -686,13 +688,13 @@ export default function EventDetails() {
   }
 
   return (
-    <SafeAreaView className={`flex-1 ${isDarkMode ? 'bg-gray-900' : 'bg-white'}`}>
+    <View className={`flex-1 ${isDarkMode ? 'bg-gray-900' : 'bg-white'}`}>
       <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} backgroundColor={isDarkMode ? "#111827" : "#F9FAFB"} />
 
       <Stack.Screen options={{ headerShown: false }} />
-      
+
       {/* Üst Başlık ve Butonlar */}
-      <View className="flex-row justify-between items-center px-4 py-3 bg-transparent absolute z-20 left-0 right-0">
+      <View className="flex-row justify-between items-center px-4 bg-transparent absolute z-20 left-0 right-0" style={{ top: insets.top}}>
         <TouchableOpacity 
           className={`p-2 ${isDarkMode ? 'bg-gray-800/50' : 'bg-white/50'} rounded-full`}
           onPress={() => router.back()}
@@ -708,7 +710,7 @@ export default function EventDetails() {
         </TouchableOpacity>
       </View>
       
-      <ScrollView className="flex-1" ref={scrollViewRef}>
+      <ScrollView className="flex-1" ref={scrollViewRef} contentContainerStyle={{ paddingBottom: insets.bottom + 60 }}>
         <View className={`w-full h-[60vw] ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'} mb-4`}>
           <Image 
             source={{ 
@@ -1046,7 +1048,7 @@ export default function EventDetails() {
       </ScrollView>
       
       {/* Alt Kayıt Butonu */}
-      <View className="p-4 bg-transparent absolute z-20 bottom-2 left-0 right-0">
+      <View className="p-4 bg-transparent absolute z-20 left-0 right-0" style={{ bottom: insets.bottom  }}>
         {event?.registerURL ? (
           <TouchableOpacity 
             className={`py-3.5 items-center rounded-lg ${isDarkMode ? 'bg-indigo-600' : 'bg-indigo-500'} active:opacity-80`}
@@ -1143,6 +1145,6 @@ export default function EventDetails() {
         isDarkMode={isDarkMode}
         t={t}
       />
-    </SafeAreaView>
+    </View>
   );
 } 

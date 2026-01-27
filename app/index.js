@@ -1,6 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, Image, TouchableOpacity, ScrollView, Dimensions, StyleSheet, ActivityIndicator, StatusBar  } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { auth } from '../firebaseConfig';
@@ -68,17 +69,15 @@ export default function WelcomeScreen() {
   }
 
   return (
-    <LinearGradient
+    <View className="flex-1">
+      <StatusBar barStyle="light-content" backgroundColor="#6366f1" />
+      <LinearGradient
         colors={['#6366f1', '#3030deff', '#793cc3ff']}
-      className="flex-1 items-center justify-between p-8"
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-    >
-       <StatusBar 
-        barStyle="light-content" 
-        backgroundColor="transparent" 
-        translucent={true} 
+        style={StyleSheet.absoluteFill}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
       />
+      <SafeAreaView className="flex-1 items-center justify-between px-8 py-8">
 
       {/* <Image
         source={require('../assets/splash-icon.png')}
@@ -144,6 +143,7 @@ export default function WelcomeScreen() {
           </Text>
         </TouchableOpacity>
       </View>
-    </LinearGradient>
+      </SafeAreaView>
+    </View>
   );
 }

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, StatusBar } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, StatusBar, ScrollView, KeyboardAvoidingView, Platform, StyleSheet } from "react-native";
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -182,18 +183,25 @@ export default function LoginScreen() {
   };
 
   return (
-    <LinearGradient 
+    <View className="flex-1">
+      <StatusBar barStyle="light-content" backgroundColor="#6366f1" />
+      <LinearGradient
         colors={['#6366f1', '#3030deff', '#793cc3ff']}
-      className="flex-1 justify-center"
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-    >
-      <StatusBar 
-        barStyle="light-content" 
-        backgroundColor="transparent" 
-        translucent={true} 
+        style={StyleSheet.absoluteFill}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
       />
-      <View className="mx-4 bg-white rounded-2xl p-6 shadow-2xl shadow-black/40">
+      <SafeAreaView className="flex-1">
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          className="flex-1"
+        >
+          <ScrollView
+            contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: 16 }}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            <View className="bg-white rounded-2xl p-6 shadow-2xl shadow-black/40">
      
         
         <Text className="text-3xl font-bold text-gray-900 text-center mb-6">
@@ -299,15 +307,18 @@ export default function LoginScreen() {
 
         {/* Köməkçi Linklər */}
         <View className="mt-4 space-y-3">
-          
-          <View className="flex-row justify-center space-x-1">
-            <Text className="text-gray-600 mr-1">Hesabınız yoxdur?</Text>
-            <TouchableOpacity onPress={() => router.push("/register")}>
-              <Text className="text-indigo-600 font-medium">Qeydiyyatdan keçin</Text>
-            </TouchableOpacity>
+
+            <View className="flex-row justify-center space-x-1">
+              <Text className="text-gray-600 mr-1">Hesabınız yoxdur?</Text>
+              <TouchableOpacity onPress={() => router.push("/register")}>
+                <Text className="text-indigo-600 font-medium">Qeydiyyatdan keçin</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
-      </View>
-    </LinearGradient>
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </View>
   );
 }

@@ -6,9 +6,12 @@ import { EmailAuthProvider, reauthenticateWithCredential, signOut, updatePasswor
 import { collection, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Alert, Image, Linking, Platform, ScrollView, StatusBar, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Alert, Image, Linking, Platform, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 
-const isLiquidGlassAvailable = Platform.OS === 'ios' && parseInt(Platform.Version, 10) >= 26;
+// Custom background komponenti
+const CustomBackground = ({ isDarkMode, style }) => (
+  <View style={[style, { backgroundColor: isDarkMode ? '#1f2937' : '#ffffff', borderTopLeftRadius: 24, borderTopRightRadius: 24 }]} />
+);
 import { useAuth } from '../../context/auth';
 import { LanguageType, translations, useLanguage } from '../../context/language';
 import { useNotifications } from '../../context/notifications';
@@ -90,7 +93,7 @@ const ProfileModalComponent = forwardRef(({ onDismiss, userData, onSave, loading
       onChange={(index) => { if (index === 0) resetForm(); }}
       backdropComponent={renderBackdrop}
       handleIndicatorStyle={{ backgroundColor: isDarkMode ? '#9ca3af' : '#d1d5db' }}
-      backgroundStyle={{ backgroundColor: isLiquidGlassAvailable ? 'transparent' : (isDarkMode ? '#1f2937' : '#ffffff') }}
+      backgroundComponent={(props) => <CustomBackground isDarkMode={isDarkMode} style={props.style} />}
     >
       <BottomSheetScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 24 }}>
         <Text className={`text-xl font-bold mb-5 text-center ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
@@ -214,7 +217,7 @@ const PasswordModalComponent = forwardRef(({ onDismiss, onChangePassword, loadin
       onDismiss={onDismiss}
       backdropComponent={renderBackdrop}
       handleIndicatorStyle={{ backgroundColor: isDarkMode ? '#9ca3af' : '#d1d5db' }}
-      backgroundStyle={{ backgroundColor: isLiquidGlassAvailable ? 'transparent' : (isDarkMode ? '#1f2937' : '#ffffff') }}
+      backgroundComponent={(props) => <CustomBackground isDarkMode={isDarkMode} style={props.style} />}
     >
       <BottomSheetScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 24 }}>
         <Text className={`text-xl font-bold mb-5 text-center ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>{t.profile.passwordChange}</Text>
@@ -311,7 +314,7 @@ const ThemeModalComponent = forwardRef(({ onDismiss, currentTheme, onThemeChange
       onDismiss={onDismiss}
       backdropComponent={renderBackdrop}
       handleIndicatorStyle={{ backgroundColor: isDarkMode ? '#9ca3af' : '#d1d5db' }}
-      backgroundStyle={{ backgroundColor: isLiquidGlassAvailable ? 'transparent' : (isDarkMode ? '#1f2937' : '#ffffff') }}
+      backgroundComponent={(props) => <CustomBackground isDarkMode={isDarkMode} style={props.style} />}
     >
       <BottomSheetView style={{ flex: 1, padding: 24 }}>
         <Text className={`text-xl font-bold mb-5 text-center ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
@@ -386,7 +389,7 @@ const LanguageModalComponent = forwardRef(({ onDismiss, currentLanguage, onLangu
       onDismiss={onDismiss}
       backdropComponent={renderBackdrop}
       handleIndicatorStyle={{ backgroundColor: isDarkMode ? '#9ca3af' : '#d1d5db' }}
-      backgroundStyle={{ backgroundColor: isLiquidGlassAvailable ? 'transparent' : (isDarkMode ? '#1f2937' : '#ffffff') }}
+      backgroundComponent={(props) => <CustomBackground isDarkMode={isDarkMode} style={props.style} />}
     >
       <BottomSheetView style={{ flex: 1, padding: 24 }}>
         <Text className={`text-xl font-bold mb-5 text-center ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
@@ -466,7 +469,7 @@ const NotificationsModalComponent = forwardRef(({ onDismiss, settings, onUpdateS
       onDismiss={onDismiss}
       backdropComponent={renderBackdrop}
       handleIndicatorStyle={{ backgroundColor: isDarkMode ? '#9ca3af' : '#d1d5db' }}
-      backgroundStyle={{ backgroundColor: isLiquidGlassAvailable ? 'transparent' : (isDarkMode ? '#1f2937' : '#ffffff') }}
+      backgroundComponent={(props) => <CustomBackground isDarkMode={isDarkMode} style={props.style} />}
     >
       <BottomSheetScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 24 }}>
         <Text className={`text-xl font-bold mb-5 text-center ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
@@ -566,7 +569,7 @@ const ContactModalComponent = forwardRef(({ onDismiss, defaultEmail, defaultPhon
       onDismiss={onDismiss}
       backdropComponent={renderBackdrop}
       handleIndicatorStyle={{ backgroundColor: isDarkMode ? '#9ca3af' : '#d1d5db' }}
-      backgroundStyle={{ backgroundColor: isLiquidGlassAvailable ? 'transparent' : (isDarkMode ? '#1f2937' : '#ffffff') }}
+      backgroundComponent={(props) => <CustomBackground isDarkMode={isDarkMode} style={props.style} />}
     >
       <BottomSheetScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 24 }}>
         <Text className={`text-xl font-bold mb-6 text-center ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>{t.profile.contact}</Text>
@@ -673,7 +676,7 @@ const LogoutModalComponent = forwardRef(({ onDismiss, onLogout, loading }, ref) 
       onDismiss={onDismiss}
       backdropComponent={renderBackdrop}
       handleIndicatorStyle={{ backgroundColor: isDarkMode ? '#9ca3af' : '#d1d5db' }}
-      backgroundStyle={{ backgroundColor: isLiquidGlassAvailable ? 'transparent' : (isDarkMode ? '#1f2937' : '#ffffff') }}
+      backgroundComponent={(props) => <CustomBackground isDarkMode={isDarkMode} style={props.style} />}
     >
       <BottomSheetView style={{ flex: 1, padding: 24 }}>
         <Text className={`text-xl font-bold mb-5 text-center ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
@@ -768,7 +771,7 @@ export default function Profile() {
           router.replace("/");
         }
       } catch (error) {
-        console.error("Kullanıcı bilgileri alınamadı:", error);
+        console.error("user data issue:", error);
       } finally {
         setLoadingUserData(false);
       }
@@ -845,7 +848,7 @@ export default function Profile() {
       }));
       
       Alert.alert(t.profile.successTitle, t.profile.profileUpdated);
-      setProfileModalVisible(false);
+      profileModalRef.current?.dismiss();
     } catch (error) {
       console.error("Profil güncelleme hatası:", error);
       Alert.alert(t.errors.errorTitle, t.errors.profileUpdateFailed);
@@ -878,7 +881,7 @@ export default function Profile() {
           await updatePassword(user, passwordData.newPassword);
           
           Alert.alert(t.profile.successTitle, t.profile.passwordUpdated);
-          setPasswordModalVisible(false);
+          passwordModalRef.current?.dismiss();
         } catch (error) {
           console.error("Şifre değiştirme hatası:", error);
           let errorMessage = t.errors.passwordChangeFailed;
@@ -929,12 +932,12 @@ export default function Profile() {
 
   const handleThemeChange = (newTheme) => {
     setTheme(newTheme);
-    setThemeModalVisible(false);
+    themeModalRef.current?.dismiss();
   };
-  
+
   const handleLanguageChange = (newLanguage) => {
     setLanguage(newLanguage);
-    setLanguageModalVisible(false);
+    languageModalRef.current?.dismiss();
   };
 
   const ProfilePlaceholder = () => (

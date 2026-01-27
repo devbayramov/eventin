@@ -56,6 +56,7 @@ export default ({ config }) => ({
           icon: "./assets/app-icon.png",
           color: "#6366f1",
           sounds: [],
+          enableBackgroundRemoteNotifications: true,
         },
       ],
     ],

@@ -9,6 +9,7 @@ import { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from "r
 import { ActivityIndicator, Alert, Image, Linking, Platform, ScrollView, StatusBar, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 const isLiquidGlassAvailable = Platform.OS === 'ios' && parseInt(Platform.Version, 10) >= 26;
+import { useAuth } from '../../context/auth';
 import { LanguageType, translations, useLanguage } from '../../context/language';
 import { useNotifications } from '../../context/notifications';
 import { ThemeType, useTheme } from '../../context/theme';
@@ -714,10 +715,11 @@ export default function Profile() {
   const [loading, setLoading] = useState(false);
   const [userData, setUserData] = useState(null);
   const [loadingUserData, setLoadingUserData] = useState(true);
-  
+
+  const { user: authUser, loading: authLoading } = useAuth();
   const { theme, setTheme, isDarkMode } = useTheme();
   const { colors, pageStyles, cardStyles, textStyles } = useThemeStyles();
-  
+
   const { language, setLanguage } = useLanguage();
   const t = translations[language];
 
@@ -738,36 +740,29 @@ export default function Profile() {
   const [userId, setUserId] = useState(null);
 
   useEffect(() => {
+    // Auth hələ yüklənmirsə gözlə
+    if (authLoading) {
+      return;
+    }
+
     const fetchUserData = async () => {
       try {
-        const user = auth.currentUser;
-        
-        if (user) {
-          setUserId(user.uid);
-          
-          const userRef = doc(db, "users", user.uid);
+        if (authUser) {
+          setUserId(authUser.uid);
+
+          const userRef = doc(db, "users", authUser.uid);
           const userSnap = await getDoc(userRef);
-          
+
           if (userSnap.exists()) {
             const data = userSnap.data();
             setUserData(data);
-            setProfileForm({
-              fullName: data.fullName || '',
-              phone: data.phone || '',
-              finCode: data.finCode || ''
-            });
           } else {
             const defaultData = {
-              fullName: user.displayName || "İstifadəçi",
-              email: user.email,
-              logoURL: user.photoURL
+              fullName: authUser.displayName || "İstifadəçi",
+              email: authUser.email,
+              logoURL: authUser.photoURL
             };
             setUserData(defaultData);
-            setProfileForm({
-              fullName: defaultData.fullName || '',
-              phone: '',
-              finCode: ''
-            });
           }
         } else {
           router.replace("/");
@@ -780,7 +775,7 @@ export default function Profile() {
     };
 
     fetchUserData();
-  }, []);
+  }, [authUser, authLoading]);
 
   const handleLogout = async () => {
     try {

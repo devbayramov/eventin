@@ -413,7 +413,6 @@ export default function Organiser() {
               }}
               keyExtractor={(item) => item.id}
               renderItem={({ item, index }) => {
-                // İki kartı yan yana göster, son tek kart durumunu da kontrol et
                 if (index % 2 === 0) {
                   const nextItem = popularOrganisers[index + 1];
                   return (

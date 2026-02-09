@@ -147,7 +147,6 @@ useEffect(() => {
     logoURL: "https://via.placeholder.com/100"
   };
 
-  // Organizatör məlumatlarını getir
   const fetchOrganiser = useCallback(async () => {
     try {
       const organiserRef = doc(db, 'users', id);

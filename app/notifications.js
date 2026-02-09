@@ -137,7 +137,6 @@ export default function NotificationsScreen() {
   const handleNotificationPress = (notification) => {
     try {
       const data = notification?.data || {};
-      console.log('Notification data:', data);
 
       // Bildirişin data-sına görə yönləndir
       if (data.eventId) {

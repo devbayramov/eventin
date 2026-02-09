@@ -333,15 +333,22 @@ export const GlobalModalProvider = ({ children }) => {
   
   const eventTypes = [
     "Bütün növlər",
+    "Konsert",
+    "Teatr",
+    "Festival",
+    "Film",
+    "Oyun gecəsi",
+    "Stand-up",
+    "Musiqi",
+    "Rəqs",
     "Seminar",
     "Konfrans",
-    "Webinar",
     "Workshop",
+    "Networking",
     "Təlim",
-    "Sərgi",
-    "İclas",
-    "Könüllülük proqramı",
-    "Təcrübə proqramı",
+    "Mentorluq",
+    "İş yarmarkası",
+    "Startap",
   ];
 
   const paymentTypes = [
@@ -639,81 +646,31 @@ export const GlobalModalProvider = ({ children }) => {
                   </View>
                 </View>
                 
-                {/* Bölge seçimi - Buton + Dropdown */}
-                <View style={dynamicStyles.filterSection}>
-                  <Text style={dynamicStyles.sectionTitle}>{t.filters.region}</Text>
-                  <TouchableOpacity 
-                    style={dynamicStyles.dropdownButton}
-                    onPress={() => toggleDropdown('regions')}
-                  >
-                    <Text style={dynamicStyles.dropdownButtonText}>{tempRegion}</Text>
-                    <Ionicons 
-                      name={showRegions ? "chevron-up" : "chevron-down"} 
-                      size={24} 
-                      color={isDarkMode ? "#E5E7EB" : "#444"} 
-                    />
-                  </TouchableOpacity>
-                  
-                  {/* Bölge Dropdown listesi */}
-                  {showRegions && (
-                    <View style={dynamicStyles.dropdownList}>
-                      <ScrollView 
-                        style={{ maxHeight: 200 }}
-                        nestedScrollEnabled={true}
-                        showsVerticalScrollIndicator={true}
-                      >
-                        {regions.map((region, index) => (
-                          <TouchableOpacity 
-                            key={index}
-                            style={[
-                              dynamicStyles.dropdownItem,
-                              tempRegion === region && dynamicStyles.selectedDropdownItem
-                            ]}
-                            onPress={() => {
-                              setTempRegion(region);
-                              setShowRegions(false);
-                            }}
-                          >
-                            <Text style={[
-                              dynamicStyles.dropdownItemText,
-                              tempRegion === region && dynamicStyles.selectedDropdownItemText
-                            ]}>{region}</Text>
-                            
-                            {tempRegion === region && (
-                              <Ionicons name="checkmark" size={20} color={isDarkMode ? "#818CF8" : "#4F46E5"} />
-                            )}
-                          </TouchableOpacity>
-                        ))}
-                      </ScrollView>
-                    </View>
-                  )}
-                </View>
-                
                 {/* Etkinlik Türü seçimi */}
                 <View style={dynamicStyles.filterSection}>
                   <Text style={dynamicStyles.sectionTitle}>{t.filters.eventType}</Text>
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={dynamicStyles.dropdownButton}
                     onPress={() => toggleDropdown('eventTypes')}
                   >
                     <Text style={dynamicStyles.dropdownButtonText}>{tempEventType}</Text>
-                    <Ionicons 
-                      name={showEventTypes ? "chevron-up" : "chevron-down"} 
-                      size={24} 
-                      color={isDarkMode ? "#E5E7EB" : "#444"} 
+                    <Ionicons
+                      name={showEventTypes ? "chevron-up" : "chevron-down"}
+                      size={24}
+                      color={isDarkMode ? "#E5E7EB" : "#444"}
                     />
                   </TouchableOpacity>
-                  
+
                   {/* Etkinlik Türü Dropdown listesi */}
                   {showEventTypes && (
                     <View style={dynamicStyles.dropdownList}>
-                      <ScrollView 
+                      <ScrollView
                         style={{ maxHeight: 200 }}
                         nestedScrollEnabled={true}
                         showsVerticalScrollIndicator={true}
                       >
                         {eventTypes.map((type, index) => (
-                          <TouchableOpacity 
+                          <TouchableOpacity
                             key={index}
                             style={[
                               dynamicStyles.dropdownItem,
@@ -728,8 +685,58 @@ export const GlobalModalProvider = ({ children }) => {
                               dynamicStyles.dropdownItemText,
                               tempEventType === type && dynamicStyles.selectedDropdownItemText
                             ]}>{type}</Text>
-                            
+
                             {tempEventType === type && (
+                              <Ionicons name="checkmark" size={20} color={isDarkMode ? "#818CF8" : "#4F46E5"} />
+                            )}
+                          </TouchableOpacity>
+                        ))}
+                      </ScrollView>
+                    </View>
+                  )}
+                </View>
+
+                {/* Bölge seçimi - Buton + Dropdown */}
+                <View style={dynamicStyles.filterSection}>
+                  <Text style={dynamicStyles.sectionTitle}>{t.filters.region}</Text>
+                  <TouchableOpacity
+                    style={dynamicStyles.dropdownButton}
+                    onPress={() => toggleDropdown('regions')}
+                  >
+                    <Text style={dynamicStyles.dropdownButtonText}>{tempRegion}</Text>
+                    <Ionicons
+                      name={showRegions ? "chevron-up" : "chevron-down"}
+                      size={24}
+                      color={isDarkMode ? "#E5E7EB" : "#444"}
+                    />
+                  </TouchableOpacity>
+
+                  {/* Bölge Dropdown listesi */}
+                  {showRegions && (
+                    <View style={dynamicStyles.dropdownList}>
+                      <ScrollView
+                        style={{ maxHeight: 200 }}
+                        nestedScrollEnabled={true}
+                        showsVerticalScrollIndicator={true}
+                      >
+                        {regions.map((region, index) => (
+                          <TouchableOpacity
+                            key={index}
+                            style={[
+                              dynamicStyles.dropdownItem,
+                              tempRegion === region && dynamicStyles.selectedDropdownItem
+                            ]}
+                            onPress={() => {
+                              setTempRegion(region);
+                              setShowRegions(false);
+                            }}
+                          >
+                            <Text style={[
+                              dynamicStyles.dropdownItemText,
+                              tempRegion === region && dynamicStyles.selectedDropdownItemText
+                            ]}>{region}</Text>
+
+                            {tempRegion === region && (
                               <Ionicons name="checkmark" size={20} color={isDarkMode ? "#818CF8" : "#4F46E5"} />
                             )}
                           </TouchableOpacity>

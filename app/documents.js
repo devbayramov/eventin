@@ -196,8 +196,7 @@ export default function Documents() {
     
     try {
       setLoading(true);
-      console.log("Silinen belge ID:", selectedDoc.id);
-      console.log("Kullanıcı ID:", currentUserId);
+
       
       const docRef = doc(
         db,

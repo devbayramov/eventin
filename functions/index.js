@@ -9,9 +9,7 @@ initializeApp();
 const db = getFirestore();
 const expo = new Expo();
 
-// ============================================
 // 1. YENİ TƏDBİR YARADILANDA - İZLƏYİCİLƏRƏ BİLDİRİŞ
-// ============================================
 exports.onNewEventCreated = onDocumentCreated('events/{eventId}', async (event) => {
   const snap = event.data;
   if (!snap) return null;
@@ -60,9 +58,7 @@ exports.onNewEventCreated = onDocumentCreated('events/{eventId}', async (event) 
   return null;
 });
 
-// ============================================
 // 2. HƏR GÜN SAAT 09:00 - SABAHKI TƏDBİRLƏR ÜÇÜN XATIRLATMA
-// ============================================
 exports.sendDailyEventReminders = onSchedule({
   schedule: '0 9 * * *',
   timeZone: 'Asia/Baku',
@@ -119,9 +115,7 @@ exports.sendDailyEventReminders = onSchedule({
   return null;
 });
 
-// ============================================
 // 3. TƏDBİRDƏN 1 SAAT ƏVVƏL XATIRLATMA
-// ============================================
 exports.sendHourlyEventReminders = onSchedule({
   schedule: '0 * * * *',
   timeZone: 'Asia/Baku',
@@ -180,9 +174,7 @@ exports.sendHourlyEventReminders = onSchedule({
   return null;
 });
 
-// ============================================
 // 4. QEYDİYYAT TƏSDİQLƏNDİKDƏ BİLDİRİŞ
-// ============================================
 exports.onRegistrationConfirmed = onDocumentCreated('registrations/{regId}', async (event) => {
   const snap = event.data;
   if (!snap) return null;
@@ -218,9 +210,7 @@ exports.onRegistrationConfirmed = onDocumentCreated('registrations/{regId}', asy
   return null;
 });
 
-// ============================================
 // 5. TƏK İSTİFADƏÇİYƏ BİLDİRİŞ GÖNDƏR
-// ============================================
 exports.sendNotification = onCall(async (request) => {
   const { userId, title, body, notificationData } = request.data;
 
@@ -248,9 +238,7 @@ exports.sendNotification = onCall(async (request) => {
   return { success: true, ticket };
 });
 
-// ============================================
 // 6. BÜTÜN İSTİFADƏÇİLƏRƏ BİLDİRİŞ
-// ============================================
 exports.sendBroadcastNotification = onCall(async (request) => {
   const { title, body, notificationData } = request.data;
 
@@ -290,9 +278,7 @@ exports.sendBroadcastNotification = onCall(async (request) => {
   return { success: true, sent: messages.length, tickets };
 });
 
-// ============================================
 // 7. TƏŞKİLATÇININ İZLƏYİCİLƏRİNƏ BİLDİRİŞ
-// ============================================
 exports.sendNotificationToFollowers = onCall(async (request) => {
   const { organiserId, title, body, notificationData } = request.data;
 

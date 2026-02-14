@@ -1,10 +1,14 @@
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { Tabs, usePathname } from "expo-router";
+import { isLiquidGlassAvailable, GlassView } from 'expo-glass-effect';
 import { useEffect, useRef } from 'react';
+import { Platform, StyleSheet } from 'react-native';
 import { translations, useLanguage } from '../../context/language';
 import { useTheme } from '../../context/theme';
 import "../../global.css";
 import { useGlobalModal } from '../../utils/GlobalModal';
+
+const hasLiquidGlass = Platform.OS === 'ios' && isLiquidGlassAvailable();
 
 export default function Layout() {
   const pathname = usePathname();
@@ -35,6 +39,36 @@ export default function Layout() {
   }, [pathname]);
 
   const getScreenOptions = ({ route }) => {
+    if (hasLiquidGlass) {
+      return {
+        headerShown: false,
+        tabBarActiveTintColor: "#6366f1",
+        tabBarInactiveTintColor: "#9ca3af",
+        tabBarStyle: {
+          position: "absolute",
+          bottom: 20,
+          left: 20,
+          right: 20,
+          borderRadius: 30,
+          backgroundColor: "transparent",
+          height: 60,
+          paddingTop: 8,
+          paddingBottom: 8,
+          paddingHorizontal: 10,
+          marginHorizontal: 20,
+          borderWidth: 0,
+          elevation: 0,
+          overflow: 'hidden',
+        },
+        tabBarBackground: () => (
+          <GlassView
+            glassEffectStyle="regular"
+            style={StyleSheet.absoluteFill}
+          />
+        ),
+      };
+    }
+
     const defaultTabBarStyle = {
       position: "absolute",
       bottom: 20,
@@ -59,13 +93,11 @@ export default function Layout() {
       overflow: 'hidden',
     };
 
-
     return {
       headerShown: false,
       tabBarStyle: defaultTabBarStyle,
       tabBarActiveTintColor: "#6366f1",
       tabBarInactiveTintColor: isDarkMode ? "#9ca3af" : "#9ca3af",
-
     };
   };
   

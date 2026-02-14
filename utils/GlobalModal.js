@@ -80,7 +80,6 @@ export const GlobalModalProvider = ({ children }) => {
     ]
   };
   
-  const contentAnim = React.useRef(new Animated.Value(0)).current;
   const filterAnim = React.useRef(new Animated.Value(width)).current;
   const opacityAnim = React.useRef(new Animated.Value(0)).current;
 
@@ -115,11 +114,6 @@ export const GlobalModalProvider = ({ children }) => {
       onPanResponderRelease: (evt, gestureState) => {
         if (gestureState.dx > width / 3) {
           Animated.parallel([
-            Animated.timing(contentAnim, {
-              toValue: 0,
-              duration: 300,
-              useNativeDriver: true,
-            }),
             Animated.timing(filterAnim, {
               toValue: width,
               duration: 300,
@@ -131,7 +125,7 @@ export const GlobalModalProvider = ({ children }) => {
               useNativeDriver: true,
             })
           ]).start();
-          
+
           setTimeout(() => {
             setModalVisible(false);
           }, 300);
@@ -179,11 +173,6 @@ export const GlobalModalProvider = ({ children }) => {
     
     setTimeout(() => {
       Animated.parallel([
-        Animated.timing(contentAnim, {
-          toValue: -width,
-          duration: 300,
-          useNativeDriver: true,
-        }),
         Animated.timing(filterAnim, {
           toValue: 0,
           duration: 300,
@@ -200,11 +189,6 @@ export const GlobalModalProvider = ({ children }) => {
   
   const hideModal = () => {
     Animated.parallel([
-      Animated.timing(contentAnim, {
-        toValue: 0,
-        duration: 300,
-        useNativeDriver: true,
-      }),
       Animated.timing(filterAnim, {
         toValue: width,
         duration: 300,
@@ -553,14 +537,9 @@ export const GlobalModalProvider = ({ children }) => {
     >
       <View style={styles.container}>
         {/* Ana içerik */}
-        <Animated.View 
-          style={[
-            dynamicStyles.content, 
-            { transform: [{ translateX: contentAnim }] }
-          ]}
-        >
+        <View style={dynamicStyles.content}>
           {children}
-        </Animated.View>
+        </View>
         {modalVisible && (
           <Animated.View 
             style={[

@@ -3,7 +3,7 @@ export default ({ config }) => ({
   expo: {
     name: "eventin",
     slug: "eventin",
-    version: "1.0.0",
+    version: "1.0.1",
     orientation: "portrait",
     icon: "./assets/app-icon.png",
     scheme: "eventin",
@@ -20,6 +20,11 @@ export default ({ config }) => ({
     },
 
     android: {
+      versionCode: 3,
+      permissions: [],
+      blockedPermissions: [
+        "android.permission.RECORD_AUDIO"
+      ],
       adaptiveIcon: {
         foregroundImage: "./assets/app-icon.png",
         backgroundColor: "#1F2937",
@@ -59,6 +64,17 @@ export default ({ config }) => ({
           enableBackgroundRemoteNotifications: true,
         },
       ],
+      [
+      
+        "expo-image-picker",
+        {
+          photosPermission: null,
+          cameraPermission: null,
+          microphonePermission: false
+
+        },
+      ],
+    
     ],
 
     experiments: {

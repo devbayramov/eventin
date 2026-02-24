@@ -717,6 +717,11 @@ export default function Home() {
       
       {/* Üst bölüm - Sabit kalacak */}
       <View className={isDarkMode ? 'w-full bg-gray-900' : 'w-full bg-gray-50'}>
+        <View className="px-4 py-1">
+          <Text className={`text-2xl font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>
+            Eventin
+          </Text>
+        </View>
         {/* Search ve Notification bar */}
         <View className="flex-row px-4 py-2 items-center justify-between">
           <View className={`flex-row flex-1 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-lg px-3 h-12 mr-2 items-center border`}>

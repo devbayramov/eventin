@@ -33,7 +33,7 @@ import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { db, storage, auth } from "../firebaseConfig";
 import * as DocumentPicker from "expo-document-picker";
 import * as Sharing from "expo-sharing";
-import * as MediaLibrary from 'expo-media-library';
+//import * as MediaLibrary from 'expo-media-library';
 import { MaterialIcons, Ionicons, AntDesign, MaterialCommunityIcons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -358,69 +358,69 @@ export default function Documents() {
     }
   };
 
-  const handleDownload = async (documentUrl) => {
-    try {
-      if (Platform.OS === 'web') {
-        window.open(documentUrl);
-        return;
-      }
+  // const handleDownload = async (documentUrl) => {
+  //   try {
+  //     if (Platform.OS === 'web') {
+  //       window.open(documentUrl);
+  //       return;
+  //     }
       
-      const { status } = await MediaLibrary.requestPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert("İcazə verilmədi", "Faylı qaleriyaya endirmək üçün icazə lazımdır");
-        return;
-      }
+  //     const { status } = await MediaLibrary.requestPermissionsAsync();
+  //     if (status !== 'granted') {
+  //       Alert.alert("İcazə verilmədi", "Faylı qaleriyaya endirmək üçün icazə lazımdır");
+  //       return;
+  //     }
       
-      Alert.alert("Əməliyyat başladı", "Sənəd endirilir, xahiş edirik gözləyin...");
+  //     Alert.alert("Əməliyyat başladı", "Sənəd endirilir, xahiş edirik gözləyin...");
       
-      const decodedFilePath = decodeURIComponent(documentUrl);
-      const actualFilePath = decodedFilePath.split("?")[0];
-      let fileName = actualFilePath.split("/").pop();
-      const cleanFileName = fileName.replace(/[^a-zA-Z0-9.-]/g, "_");
+  //     const decodedFilePath = decodeURIComponent(documentUrl);
+  //     const actualFilePath = decodedFilePath.split("?")[0];
+  //     let fileName = actualFilePath.split("/").pop();
+  //     const cleanFileName = fileName.replace(/[^a-zA-Z0-9.-]/g, "_");
 
-      const localFile = FileSystem.documentDirectory + cleanFileName;
+  //     const localFile = FileSystem.documentDirectory + cleanFileName;
       
-      const downloadResumable = FileSystem.createDownloadResumable(
-        documentUrl,
-        localFile,
-        {},
-        (downloadProgress) => {
-          // download progress izləmə (istəyə bağlı)
-        }
-      );
+  //     const downloadResumable = FileSystem.createDownloadResumable(
+  //       documentUrl,
+  //       localFile,
+  //       {},
+  //       (downloadProgress) => {
+  //         // download progress izləmə (istəyə bağlı)
+  //       }
+  //     );
       
-      const { uri } = await downloadResumable.downloadAsync();
+  //     const { uri } = await downloadResumable.downloadAsync();
       
-      if (documentUrl.toLowerCase().includes('.pdf')) {
-        if (await Sharing.isAvailableAsync()) {
-          await Sharing.shareAsync(uri);
-        } else {
-          Linking.openURL(uri);
-        }
-      } else {
-        const asset = await MediaLibrary.createAssetAsync(uri);
+  //     if (documentUrl.toLowerCase().includes('.pdf')) {
+  //       if (await Sharing.isAvailableAsync()) {
+  //         await Sharing.shareAsync(uri);
+  //       } else {
+  //         Linking.openURL(uri);
+  //       }
+  //     } else {
+  //       const asset = await MediaLibrary.createAssetAsync(uri);
         
-        const album = await MediaLibrary.getAlbumAsync('Eventin Sənədləri');
-        if (album) {
-          await MediaLibrary.addAssetsToAlbumAsync([asset], album, false);
-        } else {
-          await MediaLibrary.createAlbumAsync('Eventin Sənədləri', asset, false);
-        }
-      }
+  //       const album = await MediaLibrary.getAlbumAsync('Eventin Sənədləri');
+  //       if (album) {
+  //         await MediaLibrary.addAssetsToAlbumAsync([asset], album, false);
+  //       } else {
+  //         await MediaLibrary.createAlbumAsync('Eventin Sənədləri', asset, false);
+  //       }
+  //     }
       
-      Alert.alert(
-        "Uğurlu", 
-        documentUrl.toLowerCase().includes('.pdf') ? 
-          "Sənəd uğurla açıldı" : 
-          "Sənəd qaleriyaya endirildi", 
-        [{ text: "Tamam" }]
-      );
+  //     Alert.alert(
+  //       "Uğurlu", 
+  //       documentUrl.toLowerCase().includes('.pdf') ? 
+  //         "Sənəd uğurla açıldı" : 
+  //         "Sənəd qaleriyaya endirildi", 
+  //       [{ text: "Tamam" }]
+  //     );
       
-    } catch (error) {
-      console.error("İndirmə xətası:", error);
-      Alert.alert("Xəta", "Sənəd endirilərkən xəta baş verdi");
-    }
-  };
+  //   } catch (error) {
+  //     console.error("İndirmə xətası:", error);
+  //     Alert.alert("Xəta", "Sənəd endirilərkən xəta baş verdi");
+  //   }
+  // };
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -744,12 +744,12 @@ export default function Documents() {
             )}
             
             <View className="absolute top-2 right-2 flex-row">
-              <TouchableOpacity 
+              {/* <TouchableOpacity 
                 className="bg-white/20 p-1 mr-1 rounded-full"
                 onPress={() => handleDownload(item.documentUrl)}
               >
                 <MaterialIcons name="file-download" size={20} color="#34C759" />
-              </TouchableOpacity>
+              </TouchableOpacity> */}
               
               <TouchableOpacity 
                 className="bg-white/20 p-1 rounded-full"
@@ -1434,7 +1434,7 @@ export default function Documents() {
               
               {/* Butonlar */}
               <View className="flex-row justify-between">
-                <TouchableOpacity 
+                {/* <TouchableOpacity 
                   className="bg-blue-500 py-3 px-4 rounded flex-1 items-center mr-2 flex-row justify-center"
                   onPress={() => detailDocument && handleDownload(detailDocument.documentUrl)}
                 >
@@ -1442,7 +1442,7 @@ export default function Documents() {
                   <Text className="text-white font-bold ml-2">
                     {translations[language]?.documents?.download || "Endir"}
                   </Text>
-                </TouchableOpacity>
+                </TouchableOpacity>*/}
                 
                 <TouchableOpacity 
                   className="bg-green-500 py-3 px-4 rounded flex-1 items-center mr-2 flex-row justify-center"

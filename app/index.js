@@ -79,11 +79,11 @@ export default function WelcomeScreen() {
       />
       <SafeAreaView className="flex-1 items-center justify-between px-8 py-8">
 
-      {/* <Image
+       <Image
         source={require('../assets/splash-icon.png')}
         className="w-42 h-24 mt-8" 
         resizeMode="contain"
-      /> */}
+      /> 
 
       {/* Slider */}
       <View style={{ height: screenWidth }} className="mb-4">

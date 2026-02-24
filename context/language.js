@@ -31,7 +31,7 @@ export const LanguageProvider = ({ children }) => {
           setLanguageState(savedLanguage);
         }
       } catch (error) {
-        console.error('Dil tercihi yüklenirken hata:', error);
+        console.error('error:', error);
       } finally {
         setIsLoading(false);
       }
@@ -46,7 +46,7 @@ export const LanguageProvider = ({ children }) => {
       
       await AsyncStorage.setItem(LANGUAGE_KEY, newLanguage);
     } catch (error) {
-      console.error('Dil tercihi kaydedilirken hata:', error);
+      console.error('error:', error);
     }
   };
 

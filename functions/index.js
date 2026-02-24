@@ -121,7 +121,7 @@ exports.sendHourlyEventReminders = onSchedule({
   timeZone: 'Asia/Baku',
 }, async () => {
   const now = new Date();
-  const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000);
+  const oneHourLater = new Date(now.getTime() + 3 * 60 * 60 * 1000);
 
   const todayStr = now.toISOString().split('T')[0];
   const targetHour = oneHourLater.getHours().toString().padStart(2, '0');
